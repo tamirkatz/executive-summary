@@ -1,0 +1,19 @@
+# Copy this file to .env and replace the values with your actual API keys
+
+# API Keys - Replace with your actual API keys
+TAVILY_API_KEY=your_tavily_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Database Configuration
+# For local development, use: mongodb://localhost:27017/tavily_research
+# For production, use your MongoDB Atlas or other MongoDB service URI
+MONGODB_URI=mongodb://localhost:27017/tavily_research
+
+# Application Configuration
+PORT=8000
+ENVIRONMENT=development
+LOG_LEVEL=INFO
+
+# Optional: External Services (uncomment and configure as needed)
+# REDIS_URL=redis://localhost:6379
+# SENTRY_DSN=your_sentry_dsn_here 
