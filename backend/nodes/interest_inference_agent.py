@@ -4,32 +4,43 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from backend.config import config
+from ..classes import InputState, ResearchState
+from ..agents.base_agent import BaseAgent
 
 
 class UserInterests(BaseModel):
     """Structured output for inferred user interests."""
     strategic_interests: List[str] = Field(
-        description="List of strategic business interests and goals", 
-        max_items=8
+        description="List of strategic business interests and goals relevant to the user's role and company", 
+        max_items=10
     )
     technology_interests: List[str] = Field(
-        description="List of technology-related interests and focus areas", 
-        max_items=8
+        description="List of technology-related interests and focus areas relevant to the user's role and company", 
+        max_items=10
     )
     external_signals: List[str] = Field(
-        description="List of external market signals and trends to monitor", 
-        max_items=8
+        description="List of external market signals, trends, and competitive moves to monitor", 
+        max_items=10
     )
     information_sources: List[str] = Field(
-        description="List of preferred information sources and channels", 
+        description="List of preferred information sources and channels for staying informed", 
+        max_items=10
+    )
+    industry_focus: List[str] = Field(
+        description="List of specific industries and sectors to focus on based on company and role", 
+        max_items=8
+    )
+    partnership_opportunities: List[str] = Field(
+        description="List of potential partnership and collaboration opportunities", 
         max_items=8
     )
 
 
-class InterestInferenceAgent:
+class InterestInferenceAgent(BaseAgent):
     """Infers user interests based on enriched profile data using OpenAI."""
     
     def __init__(self, model_name: str = "gpt-4o-mini"):
+        super().__init__(agent_type="interest_inference_agent")
         self.llm = ChatOpenAI(
             model=model_name,
             temperature=0.2,
@@ -82,8 +93,7 @@ class InterestInferenceAgent:
         
         # Create the runnable chain with structured output
         self.chain = (
-            {"profile": RunnablePassthrough()}
-            | self.prompt
+            self.prompt
             | self.llm.with_structured_output(UserInterests)
         )
     
@@ -111,12 +121,15 @@ Reasoning Guidelines:
 5. Consider regulatory environment and compliance needs
 6. Think about technology adoption and innovation focus
 7. Consider partnership and ecosystem relationships
+8. Focus on actionable, specific interests that would help the user make better decisions
 
 Output Guidelines:
-- Strategic interests: Business goals, market opportunities, competitive strategies
-- Technology interests: Tech focus areas, innovation priorities, technical capabilities
-- External signals: Market trends, competitive moves, regulatory changes to monitor
+- Strategic interests: Business goals, market opportunities, competitive strategies, growth areas
+- Technology interests: Tech focus areas, innovation priorities, technical capabilities, digital transformation
+- External signals: Market trends, competitive moves, regulatory changes, industry developments to monitor
 - Information sources: Preferred channels for staying informed and making decisions
+- Industry focus: Specific industries and sectors relevant to the company's business and user's role
+- Partnership opportunities: Potential collaborations, strategic partnerships, ecosystem relationships
 
 Provide specific, actionable interests that would be relevant for someone in this role at this company."""
     
@@ -142,80 +155,155 @@ Consider:
 - Industry trends and competitive landscape
 - Regulatory environment and compliance needs
 - Technology adoption and innovation priorities
+- Partnership and ecosystem opportunities
 
 Provide specific, actionable interests that would help this person stay informed and make better decisions."""
     
-    def infer_interests(self, profile: Dict[str, Any]) -> Dict[str, Any]:
+    async def infer_interests_async(self, profile: Dict[str, Any], websocket_manager=None, job_id=None) -> Dict[str, Any]:
         """
-        Infer user interests based on enriched profile data.
+        Async version of infer_interests with websocket integration.
         
         Args:
             profile: Dictionary from UserProfileEnrichmentAgent
+            websocket_manager: WebSocket manager for status updates
+            job_id: Job ID for status updates
             
         Returns:
             Dictionary containing inferred interests
         """
         try:
+            await self.send_status_update(
+                websocket_manager, job_id,
+                status="processing",
+                message="Analyzing user interests and preferences",
+                result={"step": "Interest Inference", "substep": "analysis"}
+            )
+
             # Run the chain with structured output
-            result = self.chain.invoke({"profile": profile})
+            result = await self.chain.ainvoke({
+                "company": profile.get("company", "Unknown Company"),
+                "role": profile.get("role", "Unknown Role"),
+                "description": profile.get("description", "No description available"),
+                "industry": profile.get("industry", "Unknown Industry"),
+                "sector": profile.get("sector", "Unknown Sector"),
+                "clients_industries": ", ".join(profile.get("clients_industries", [])),
+                "competitors": ", ".join(profile.get("competitors", [])),
+                "known_clients": ", ".join(profile.get("known_clients", [])),
+                "partners": ", ".join(profile.get("partners", []))
+            })
             
             # Convert to dictionary
-            return result.model_dump()
+            interests = result.model_dump()
+            
+            await self.send_status_update(
+                websocket_manager, job_id,
+                status="interests_complete",
+                message="User interests analysis completed",
+                result={
+                    "step": "Interest Inference",
+                    "substep": "complete",
+                    "interests": interests
+                }
+            )
+            
+            return interests
             
         except Exception as e:
             # Fallback to basic interests if inference fails
             role = profile.get("role", "Unknown")
+            error_msg = f"Error inferring interests for {role}: {str(e)}"
+            self.log_agent_error({"role": role}, e)
+            
+            await self.send_error_update(
+                websocket_manager, job_id,
+                error_msg=error_msg,
+                step="Interest Inference",
+                continue_research=True
+            )
+            
             return self._get_fallback_interests(role)
     
-    def infer_interests_async(self, profile: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Async version of infer_interests.
-        
-        Args:
-            profile: Dictionary from InterestInferenceAgent
-            
-        Returns:
-            Dictionary containing inferred interests
-        """
-        try:
-            # Run the chain asynchronously with structured output
-            result = self.chain.ainvoke({"profile": profile})
-            
-            # Convert to dictionary
-            return result.model_dump()
-            
-        except Exception as e:
-            # Fallback to basic interests if inference fails
-            role = profile.get("role", "Unknown")
-            return self._get_fallback_interests(role)
+
     
     def _get_fallback_interests(self, role: str) -> Dict[str, Any]:
         """Provide fallback interests based on role."""
-        role_pattern = self.role_patterns.get(role, self.role_patterns["CEO"])
         
         return {
             "strategic_interests": [
                 "market expansion",
                 "competitive positioning", 
                 "business growth",
-                "strategic partnerships"
+                "strategic partnerships",
+                "industry leadership"
             ],
             "technology_interests": [
                 "digital transformation",
                 "automation",
                 "data analytics",
-                "cloud technologies"
+                "cloud technologies",
+                "innovation trends"
             ],
             "external_signals": [
                 "market trends",
                 "competitor moves",
                 "regulatory changes",
-                "industry developments"
+                "industry developments",
+                "economic indicators"
             ],
             "information_sources": [
                 "industry reports",
                 "business news",
                 "competitive analysis",
-                "market research"
+                "market research",
+                "professional networks"
+            ],
+            "industry_focus": [
+                "primary industry",
+                "adjacent markets",
+                "emerging sectors",
+                "global markets"
+            ],
+            "partnership_opportunities": [
+                "strategic alliances",
+                "technology partnerships",
+                "channel partnerships",
+                "ecosystem collaborations"
             ]
-        } 
+        }
+    
+    async def run(self, state: ResearchState) -> ResearchState:
+        """Main entry point for the interest inference agent following the common node pattern."""
+        company = state.get('company', 'Unknown Company')
+        profile = state.get('profile', {})
+        websocket_manager, job_id = self.get_websocket_info(state)
+
+        self.log_agent_start(state)
+
+        # Check if we have a profile to work with
+        if not profile:
+            self.logger.warning(f"No profile found in state for {company}")
+            # Create a minimal profile from available data
+            profile = {
+                "company": company,
+                "role": state.get('user_role', 'Unknown Role'),
+                "description": f"Company in the business sector",
+                "industry": "Unknown",
+                "sector": "Unknown",
+                "clients_industries": [],
+                "competitors": [],
+                "known_clients": [],
+                "partners": []
+            }
+
+        # Infer interests
+        interests = await self.infer_interests_async(
+            profile=profile,
+            websocket_manager=websocket_manager,
+            job_id=job_id
+        )
+
+        # Update the state with interests
+        state['user_interests'] = interests
+
+        self.log_agent_complete(state)
+        return state 

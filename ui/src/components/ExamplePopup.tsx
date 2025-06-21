@@ -6,36 +6,44 @@ export const EXAMPLE_COMPANIES = [
   {
     name: "Stripe",
     url: "stripe.com",
+    userRole: "CEO",
   },
   {
     name: "Shopify",
     url: "shopify.com",
+    userRole: "CEO",
   },
   {
     name: "Notion",
     url: "notion.so",
+    userRole: "CEO",
   },
   {
     name: "Tesla",
     url: "tesla.com",
+    userRole: "CEO",
   },
   {
     name: "Airbnb",
     url: "airbnb.com",
+    userRole: "CEO",
   },
   {
     name: "Slack",
     url: "slack.com",
+    userRole: "CEO",
   },
   {
     name: "Spotify",
     url: "spotify.com",
+    userRole: "CEO",
   },
 ];
 
 export interface ExampleCompany {
   name: string;
   url: string;
+  userRole: string;
 }
 
 export interface ExamplePopupProps {

@@ -6,7 +6,7 @@ import ExamplePopup, { ExampleCompany } from "./ExamplePopup";
 export interface FormData {
   companyName: string;
   companyUrl: string;
-  companyHqLocation: string;
+  userRole: string;
 }
 
 interface ResearchFormProps {
@@ -28,7 +28,7 @@ const ResearchForm: React.FC<ResearchFormProps> = ({
   const [formData, setFormData] = useState<FormData>({
     companyName: "",
     companyUrl: "",
-    companyHqLocation: "",
+    userRole: "",
   });
 
   // Animation states
@@ -59,7 +59,7 @@ const ResearchForm: React.FC<ResearchFormProps> = ({
         setFormData({
           companyName: "",
           companyUrl: "",
-          companyHqLocation: "",
+          userRole: "",
         });
 
         // Show the example suggestion again
@@ -99,7 +99,7 @@ const ResearchForm: React.FC<ResearchFormProps> = ({
       const newFormData = {
         companyName: example.name,
         companyUrl: example.url,
-        companyHqLocation: example.hq,
+        userRole: example.userRole,
       };
 
       // Update form data
@@ -191,20 +191,20 @@ const ResearchForm: React.FC<ResearchFormProps> = ({
               </div>
             </div>
 
-            {/* Company HQ */}
+            {/* User Role */}
             <div className="relative group">
               <label
-                htmlFor="companyHqLocation"
+                htmlFor="userRole"
                 className="block text-base font-medium text-gray-700 mb-2.5 transition-all duration-200 group-hover:text-gray-900 font-['DM_Sans']"
               >
-                Company HQ
+                User Role
               </label>
-              <LocationInput
-                value={formData.companyHqLocation}
-                onChange={(value) =>
+              <input
+                value={formData.userRole}
+                onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    companyHqLocation: value,
+                    userRole: e.target.value,
                   }))
                 }
                 className={`${glassStyle.input} transition-all duration-300 focus:border-[#468BFF]/50 focus:ring-1 focus:ring-[#468BFF]/50 group-hover:border-[#468BFF]/30 bg-white/80 backdrop-blur-sm text-lg py-4 pl-12 font-['DM_Sans']`}

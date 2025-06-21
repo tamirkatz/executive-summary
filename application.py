@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from backend.config import config
-from backend.graph import Graph
+from backend.workflow import Graph
 from backend.services.mongodb import MongoDBService
 from backend.services.pdf_service import PDFService
 from backend.services.websocket_manager import WebSocketManager
@@ -91,7 +91,12 @@ except Exception as e:
 class ResearchRequest(BaseModel):
     company: str
     company_url: str | None = None
-    hq_location: str | None = None
+    user_role: str | None = None
+    
+class ExecutiveSummaryRequest(BaseModel):
+    company: str
+    company_url: str | None = None
+    user_role: str | None = None
 
 class PDFGenerationRequest(BaseModel):
     report_content: str
@@ -106,7 +111,7 @@ async def preflight():
     return response
 
 @app.post("/research")
-async def research(data: ResearchRequest):
+async def research(data: ExecutiveSummaryRequest):
     try:
         logger.info(f"Received research request for {data.company}")
         job_id = str(uuid.uuid4())
@@ -127,7 +132,7 @@ async def research(data: ResearchRequest):
         logger.error(f"Error initiating research: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-async def process_research(job_id: str, data: ResearchRequest):
+async def process_research(job_id: str, data: ExecutiveSummaryRequest):
     try:
         if mongodb:
             mongodb.create_job(job_id, data.dict())
@@ -138,7 +143,7 @@ async def process_research(job_id: str, data: ResearchRequest):
         graph = Graph(
             company=data.company,
             url=data.company_url,
-            hq_location=data.hq_location,
+            user_role=data.user_role,
             websocket_manager=manager,
             job_id=job_id
         )
@@ -147,8 +152,12 @@ async def process_research(job_id: str, data: ResearchRequest):
         async for s in graph.run(thread={}):
             state.update(s)
         
-        # Look for the compiled report in either location.
-        report_content = state.get('report') or (state.get('editor') or {}).get('report')
+        # Look for the compiled report in multiple possible locations
+        report_content = (
+            state.get('report') or 
+            (state.get('editor') or {}).get('report') or
+            (state.get('executive_report_composer') or {}).get('report')
+        )
         if report_content:
             logger.info(f"Found report in final state (length: {len(report_content)})")
             job_status[job_id].update({
@@ -172,6 +181,17 @@ async def process_research(job_id: str, data: ResearchRequest):
         else:
             logger.error(f"Research completed without finding report. State keys: {list(state.keys())}")
             logger.error(f"Editor state: {state.get('editor', {})}")
+            logger.error(f"Executive report composer state: {state.get('executive_report_composer', {})}")
+            
+            # Log the structure of each state node for debugging
+            for key in state.keys():
+                if isinstance(state[key], dict):
+                    logger.error(f"State[{key}] keys: {list(state[key].keys())}")
+                    # Check specifically for report in this node
+                    if 'report' in state[key]:
+                        logger.error(f"Found report in state[{key}] with length: {len(state[key]['report'])}")
+                else:
+                    logger.error(f"State[{key}] type: {type(state[key])}")
             
             # Check if there was a specific error in the state
             error_message = "No report found"

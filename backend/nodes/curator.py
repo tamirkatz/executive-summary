@@ -124,6 +124,15 @@ class Curator:
             'company_data': ('🏢 Company', 'company')
         }
 
+        # Handle specialized data if it exists
+        specialized_data = state.get('specialized_data', {})
+        if specialized_data:
+            # Merge specialized data with company data for processing
+            company_data = state.get('company_data', {})
+            company_data.update(specialized_data)
+            state['company_data'] = company_data
+            msg.append(f"\n🔬 Specialized: Found {len(specialized_data)} additional documents")
+
         # Create all evaluation tasks upfront
         curation_tasks = []
         for data_field, (emoji, doc_type) in data_types.items():

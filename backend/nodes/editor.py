@@ -38,7 +38,6 @@ class Editor:
         # Update context with values from state
         self.context = {
             "company": company,
-            "hq_location": state.get('hq_location', 'Unknown')
         }
         
         # Send initial compilation status
@@ -56,7 +55,6 @@ class Editor:
 
         context = {
             "company": company,
-            "hq_location": state.get('hq_location', 'Unknown')
         }
         
         msg = [f"📑 Compiling final report for {company}..."]
@@ -228,14 +226,13 @@ class Editor:
         
         # Use values from centralized context
         company = self.context["company"]
-        hq_location = self.context["hq_location"]
         
         prompt = f"""You are compiling a comprehensive research report about {company}.
 
 Compiled briefings:
 {combined_content}
 
-Create a comprehensive and focused report on {company}, a company headquartered in {hq_location} that:
+Create a comprehensive and focused report on {company}, that:
 1. Integrates information from all sections into a cohesive non-repetitive narrative
 2. Maintains important details from each section
 3. Logically organizes information and removes transitional commentary / explanations

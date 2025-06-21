@@ -712,7 +712,7 @@ function App() {
   const handleFormSubmit = async (formData: {
     companyName: string;
     companyUrl: string;
-    companyHqLocation: string;
+    userRole: string;
   }) => {
     console.log("🚀 Starting research for:", formData.companyName);
 
@@ -753,7 +753,7 @@ function App() {
       const requestData = {
         company: formData.companyName,
         company_url: formattedCompanyUrl,
-        hq_location: formData.companyHqLocation || undefined,
+        user_role: formData.userRole || undefined,
       };
 
       console.log("📤 Sending research request:", requestData);

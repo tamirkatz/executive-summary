@@ -1,6 +1,7 @@
 certifi==2025.1.31
 fastapi==0.115.11
 langchain_core==0.3.41
+langchain_openai==0.2.5
 langgraph==0.3.5
 openai==1.65.4
 protobuf~=4.25.0
