@@ -137,6 +137,7 @@ class Enricher:
 
         # Process each type of curated data
         data_types = {
+            'competitor_data': ('🎯 Competitor', 'competitor'),  # NEW: Highest priority
             'financial_data': ('💰 Financial', 'financial'),
             'news_data': ('📰 News', 'news'),
             'company_data': ('🏢 Company', 'company')

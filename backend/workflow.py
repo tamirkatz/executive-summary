@@ -116,8 +116,7 @@ class Graph:
 
         # Connect remaining nodes
         self.workflow.add_edge("curator", "enricher")
-        self.workflow.add_edge("enricher", "insight_synthesizer")
-        self.workflow.add_edge("insight_synthesizer", "executive_report_composer")
+        self.workflow.add_edge("enricher", "executive_report_composer")
         
 
     async def run(self, thread: Dict[str, Any]) -> AsyncIterator[Dict[str, Any]]:

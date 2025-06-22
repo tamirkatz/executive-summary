@@ -289,42 +289,95 @@ Rationale: {rationale}
         return "\n".join(context_pieces) if context_pieces else "Limited context available"
     
     def _create_fallback_queries(self, company: str, industry: str, profile: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Create basic fallback queries."""
+        """Create basic fallback queries with heavy competitor focus."""
         fallback_queries = []
         competitors = profile.get('competitors', [])
         
-        # Company queries
-        base_queries = [
-            f'site:docs.{company.lower().replace(" ", "")}.com',
-            f'"{company}" product features',
-            f'"{company}" technical architecture',
-            f'"{company}" API documentation',
-            f'"{company}" customer case studies'
+        # COMPETITOR-FOCUSED QUERIES (Priority #1)
+        for competitor in competitors[:5]:  # Focus on top 5 competitors
+            competitor_queries = [
+                # Recent launches and product updates
+                f'"{competitor}" product launch 2024',
+                f'"{competitor}" new features announcement 2024',
+                f'"{competitor}" product update release 2024',
+                f'"{competitor}" platform expansion 2024', 
+                
+                # Partnerships and integrations
+                f'"{competitor}" partnership announcement 2024',
+                f'"{competitor}" integration launch 2024',
+                f'"{competitor}" strategic alliance 2024',
+                f'"{competitor}" collaboration news 2024',
+                
+                # Funding and acquisitions
+                f'"{competitor}" funding round 2024',
+                f'"{competitor}" acquisition news 2024',
+                f'"{competitor}" investment announcement 2024',
+                f'"{competitor}" merger deal 2024',
+                
+                # Market moves and expansion
+                f'"{competitor}" market expansion 2024',
+                f'"{competitor}" new market entry 2024',
+                f'"{competitor}" geographic expansion 2024',
+                
+                # Technology and innovation
+                f'"{competitor}" technology innovation 2024',
+                f'"{competitor}" API updates 2024',
+                f'"{competitor}" developer platform 2024',
+                
+                # Business developments
+                f'"{competitor}" executive hire 2024',
+                f'"{competitor}" strategic move 2024',
+                f'"{competitor}" business model change 2024'
+            ]
+            
+            for i, query in enumerate(competitor_queries):
+                fallback_queries.append({
+                    "id": len(fallback_queries) + 1,
+                    "query": query,
+                    "intent_topic": f"Competitor Intelligence - {competitor}",
+                    "objectives_served": [f"Track {competitor} latest moves"],
+                    "target_type": "News",
+                    "query_type": "competitor_focus",
+                    "expected_sources": ["Press releases", "Tech news", "Business news"],
+                    "rationale": f"Monitor recent developments from key competitor {competitor}"
+                })
+        
+        # Company queries (secondary priority)
+        company_queries = [
+            f'"{company}" vs competitors 2024',
+            f'"{company}" competitive advantage 2024',
+            f'"{company}" market position 2024'
         ]
         
-        # Competitor queries
-        for competitor in competitors[:3]:
-            base_queries.extend([
-                f'"{competitor}" product capabilities',
-                f'"{competitor}" technical documentation'
-            ])
-        
-        # Industry queries
-        base_queries.extend([
-            f'{industry} market trends 2024',
-            f'{industry} regulatory updates'
-        ])
-        
-        for i, query in enumerate(base_queries):
+        for query in company_queries:
             fallback_queries.append({
-                "id": i + 1,
+                "id": len(fallback_queries) + 1,
                 "query": query,
-                "intent_topic": "General Research",
-                "objectives_served": ["Gather basic information"],
+                "intent_topic": "Company Positioning",
+                "objectives_served": ["Understand competitive position"],
                 "target_type": "Mixed",
-                "query_type": "general",
-                "expected_sources": ["Various"],
-                "rationale": "Fallback query for basic information gathering"
+                "query_type": "company_comparison",
+                "expected_sources": ["Industry reports", "Analysis"],
+                "rationale": "Understand company's position vs competitors"
+            })
+        
+        # Industry trend queries (tertiary priority)
+        industry_queries = [
+            f'{industry} latest developments 2024',
+            f'{industry} regulatory changes 2024',
+            f'{industry} market trends 2024'
+        ]
+        
+        for query in industry_queries:
+            fallback_queries.append({
+                "id": len(fallback_queries) + 1,
+                "query": query,
+                "intent_topic": "Industry Intelligence",
+                "objectives_served": ["Monitor industry changes"],
+                "target_type": "Industry",
+                "query_type": "industry_trend",
+                "expected_sources": ["Industry publications", "Research"],
+                "rationale": "Track industry-wide developments"
             })
         
         return fallback_queries

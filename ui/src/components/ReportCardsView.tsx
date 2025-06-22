@@ -29,105 +29,130 @@ const ReportCardsView: React.FC<ReportCardsViewProps> = ({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
-  // Parse the report content into sections
+  // Parse the actual report content into sections
   const reportSections = useMemo(() => {
     if (!reportContent) return [];
 
     const sections: ReportSection[] = [];
 
-    // Define sections with their content from the provided Nuvei report
-    const sectionData = [
-      {
-        title: "Executive Summary",
-        content: `### Top 3 Takeaways
-1. Nuvei's transition to a private entity, backed by Advent International and Ryan Reynolds, provides agility and strategic flexibility to focus on long-term growth and innovation.
-2. Competitors like Lightspeed Commerce are advancing in AI-driven payment solutions, necessitating Nuvei to enhance its technology stack to maintain a competitive edge.
-3. Strategic partnerships, such as with OnBuy, position Nuvei to capitalize on the growing demand for integrated e-commerce payment solutions.
+    // Split the report by main headers (# headers)
+    const mainSections = reportContent
+      .split(/(?=^# )/gm)
+      .filter((section) => section.trim());
 
-### Business Relevance
-The fintech industry is rapidly evolving, with increasing competition and technological advancements. Nuvei must act swiftly to leverage its private status and strategic partnerships to maintain and enhance its market position.`,
-        priority: "high" as const,
-        cardType: "summary" as const,
-      },
-      {
-        title: "Strategic Recommendations",
-        content: `### Recommended Actions
-- Prioritize investments in AI and machine learning to improve fraud detection and operational efficiency.
-- Explore strategic partnerships and potential acquisitions to enhance technological capabilities and market reach.
-- Conduct a competitive analysis to identify and address gaps in Nuvei's offerings, particularly in automation and customized payment solutions.
+    // Extract company name from the report title if available
+    const titleMatch = reportContent.match(/Executive Strategic Brief: (.+)/);
+    const companyName = titleMatch ? titleMatch[1] : "Company";
 
-### Specific Recommendations
-1. **Explore partnerships** in e-commerce with platforms like WooCommerce and Magento, due to the trend towards integrated payment solutions.
-2. **Start positioning** around AI-driven fraud detection to capture interest from businesses seeking enhanced security.
-3. **Consider internal review** of technology stack, given the competitive advancements in AI and machine learning by rivals.`,
-        priority: "high" as const,
-        cardType: "recommendations" as const,
-      },
-      {
-        title: "Company Performance & Signals",
-        content: `### Product / Engineering Highlights
-- No new public product launches or outages reported.
+    for (const section of mainSections) {
+      const lines = section.trim().split("\n");
+      if (lines.length === 0) continue;
 
-### Customer Trends
-- Strengthened partnerships with e-commerce platforms like OnBuy and BigCommerce, indicating a focus on tailored payment solutions for online retail.
+      // Extract the main header
+      const headerLine = lines.find((line) => line.startsWith("# "));
+      if (!headerLine) continue;
 
-### Hiring & Talent
-- No significant public signals regarding key hires or exits.
+      const title = headerLine.replace("# ", "").trim();
 
-### Investor/Board Mentions
-- The backing by Advent International and Ryan Reynolds in the $6.3 billion deal enhances Nuvei's brand equity and market confidence.`,
-        priority: "medium" as const,
-        cardType: "data" as const,
-      },
-      {
-        title: "Market & Industry Trends",
-        content: `### Emerging Technologies
-- Increasing adoption of AI and machine learning in payment processing and fraud detection.
+      // Skip the main document title
+      if (
+        title.includes("Executive Strategic Brief") ||
+        title.includes("Research Report")
+      ) {
+        continue;
+      }
 
-### Shifts in Buyer Behavior
-- Growing demand for integrated and customized payment solutions in e-commerce and retail sectors.
+      // Get the content (everything after the header)
+      const contentStartIndex =
+        lines.findIndex((line) => line.startsWith("# ")) + 1;
+      const content = lines.slice(contentStartIndex).join("\n").trim();
 
-### Macro Trends
-- Favorable regulatory environment for fintech companies, encouraging market expansion and innovation.`,
-        priority: "medium" as const,
-        cardType: "analysis" as const,
-      },
-      {
-        title: "Competitive Landscape",
-        content: `### Competitor Launches / Pivots
-- Lightspeed Commerce's advancements in AI-driven automation and omnichannel retail solutions.
+      if (!content) continue;
 
-### Partnerships / M&A
-- Nuvei's partnership with OnBuy to enhance e-commerce capabilities.
+      // Determine card type and priority based on section title
+      const { cardType, priority } = determineCardTypeAndPriority(title);
 
-### Funding Announcements
-- No new funding announcements beyond the recent private transaction.
+      sections.push({
+        title,
+        content,
+        cardType,
+        priority,
+      });
+    }
 
-### Analysis
-**Why this matters:** Nuvei must enhance its technological capabilities to remain competitive against firms like Lightspeed Commerce.
-
-**Threat level or opportunity level:** High opportunity to capitalize on strategic partnerships and technological investments.
-
-**Suggested response or positioning:** Accelerate AI-driven technology investments and explore further strategic partnerships.`,
-        priority: "high" as const,
-        cardType: "analysis" as const,
-      },
-      {
-        title: "Opportunities & Threats",
-        content: `### Key Opportunities
-- **High-potential partnerships** with e-commerce platforms to expand integrated payment solutions.
-- **Opportunity to differentiate** through tailored financial services in niche markets.
-
-### Key Threats
-- **Threat from competitors** advancing in AI and automation, requiring proactive technological investments.
-- Need to maintain competitive edge in rapidly evolving fintech landscape.`,
-        priority: "high" as const,
-        cardType: "analysis" as const,
-      },
-    ];
-
-    return sectionData;
+    return sections;
   }, [reportContent]);
+
+  // Helper function to determine card type and priority based on section title
+  const determineCardTypeAndPriority = (
+    title: string
+  ): {
+    cardType: ReportSection["cardType"];
+    priority: ReportSection["priority"];
+  } => {
+    const lowerTitle = title.toLowerCase();
+
+    // Market-centric section mapping
+    if (
+      lowerTitle.includes("market intelligence") ||
+      lowerTitle.includes("highlights")
+    ) {
+      return { cardType: "analysis", priority: "high" };
+    }
+    if (lowerTitle.includes("ecosystem") || lowerTitle.includes("technology")) {
+      return { cardType: "analysis", priority: "medium" };
+    }
+    if (
+      lowerTitle.includes("competitor") ||
+      lowerTitle.includes("launches") ||
+      lowerTitle.includes("moves")
+    ) {
+      return { cardType: "analysis", priority: "high" };
+    }
+    if (lowerTitle.includes("regulatory") || lowerTitle.includes("changes")) {
+      return { cardType: "data", priority: "medium" };
+    }
+    if (
+      lowerTitle.includes("company fit") ||
+      lowerTitle.includes("gaps") ||
+      lowerTitle.includes("positioning")
+    ) {
+      return { cardType: "analysis", priority: "high" };
+    }
+    if (
+      lowerTitle.includes("strategic recommendations") ||
+      lowerTitle.includes("recommendations")
+    ) {
+      return { cardType: "recommendations", priority: "high" };
+    }
+
+    // Legacy section mapping for backward compatibility
+    if (
+      lowerTitle.includes("executive summary") ||
+      lowerTitle.includes("summary")
+    ) {
+      return { cardType: "summary", priority: "high" };
+    }
+    if (lowerTitle.includes("performance") || lowerTitle.includes("signals")) {
+      return { cardType: "data", priority: "medium" };
+    }
+    if (
+      lowerTitle.includes("market") ||
+      lowerTitle.includes("trends") ||
+      lowerTitle.includes("industry")
+    ) {
+      return { cardType: "analysis", priority: "medium" };
+    }
+    if (
+      lowerTitle.includes("opportunities") ||
+      lowerTitle.includes("threats")
+    ) {
+      return { cardType: "analysis", priority: "high" };
+    }
+
+    // Default fallback
+    return { cardType: "analysis", priority: "medium" };
+  };
 
   const handleCardToggle = (title: string) => {
     const newExpanded = new Set(expandedCards);
@@ -161,6 +186,10 @@ The fintech industry is rapidly evolving, with increasing competition and techno
     );
   }
 
+  // Extract company name for display
+  const titleMatch = reportContent.match(/Executive Strategic Brief: (.+)/);
+  const companyName = titleMatch ? titleMatch[1] : "Company";
+
   return (
     <div className="space-y-6">
       {/* Header with controls */}
@@ -170,7 +199,7 @@ The fintech industry is rapidly evolving, with increasing competition and techno
             Strategic Intelligence Report
           </h2>
           <span className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-100 rounded-full">
-            Nuvei Analysis
+            {companyName} Analysis
           </span>
         </div>
 

@@ -6,7 +6,6 @@ import ResearchQueries from "./components/ResearchQueries";
 import ResearchStatus from "./components/ResearchStatus";
 import ResearchReport from "./components/ResearchReport";
 import ResearchForm from "./components/ResearchForm";
-import ReportPreview from "./components/ReportPreview";
 import {
   ResearchOutput,
   DocCount,
@@ -42,12 +41,6 @@ dmSansStyleElement.textContent = dmSansStyle;
 document.head.appendChild(dmSansStyleElement);
 
 function App() {
-  // Check if we should show the preview mode
-  const [showPreview, setShowPreview] = useState(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get("preview") === "true";
-  });
-
   const [isResearching, setIsResearching] = useState(false);
   const [status, setStatus] = useState<ResearchStatusType | null>(null);
   const [output, setOutput] = useState<ResearchOutput | null>(null);
@@ -1026,52 +1019,10 @@ function App() {
     }
   }, [status]);
 
-  const togglePreview = () => {
-    const newShowPreview = !showPreview;
-    setShowPreview(newShowPreview);
-
-    // Update URL without page reload
-    const url = new URL(window.location.href);
-    if (newShowPreview) {
-      url.searchParams.set("preview", "true");
-    } else {
-      url.searchParams.delete("preview");
-    }
-    window.history.pushState(null, "", url);
-  };
-
-  // If preview mode is active, show the preview component
-  if (showPreview) {
-    return (
-      <div className="relative">
-        {/* Toggle button */}
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={togglePreview}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
-          >
-            ← Back to Main App
-          </button>
-        </div>
-        <ReportPreview />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white p-8 relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(70,139,255,0.35)_1px,transparent_0)] bg-[length:24px_24px] bg-center"></div>
       <div className="max-w-5xl mx-auto space-y-8 relative">
-        {/* Toggle button */}
-        <div className="absolute top-0 right-0 z-10">
-          <button
-            onClick={togglePreview}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-colors"
-          >
-            🎯 Preview Cards UI
-          </button>
-        </div>
-
         {/* Header Component */}
         <Header glassStyle={glassStyle.card} />
 

@@ -21,13 +21,16 @@ class ResearchState(InputState):
     financial_data: Dict[str, Any]
     news_data: Dict[str, Any]
     company_data: Dict[str, Any]
+    competitor_data: Dict[str, Any]  # Dedicated competitor intelligence data
     curated_financial_data: Dict[str, Any]
     curated_news_data: Dict[str, Any]
     curated_company_data: Dict[str, Any]
+    curated_competitor_data: Dict[str, Any]  # Curated competitor intelligence data
     strategic_insights: Dict[str, Any]  # Synthesized insights from InsightSynthesizer
     financial_briefing: str
     news_briefing: str
     company_briefing: str
+    competitor_briefing: str  # Dedicated competitor briefing
     references: List[str]
     briefings: Dict[str, Any]
     report: str
@@ -49,13 +52,16 @@ default_research_state = {
     "financial_data": {},
     "news_data": {},
     "company_data": {},
+    "competitor_data": {},  # NEW: Dedicated competitor data
     "curated_financial_data": {},
     "curated_news_data": {},
     "curated_company_data": {},
+    "curated_competitor_data": {},  # NEW: Curated competitor data
     "strategic_insights": {},
     "financial_briefing": "",
     "news_briefing": "",
     "company_briefing": "",
+    "competitor_briefing": "",  # NEW: Competitor briefing
     "references": [],
     "briefings": {},
     "report": "",

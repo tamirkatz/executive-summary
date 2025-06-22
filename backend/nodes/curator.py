@@ -118,6 +118,7 @@ class Curator:
         msg = [f"🔍 Curating research data for {company}"]
         
         data_types = {
+            'competitor_data': ('🎯 Competitor', 'competitor'),  # NEW: Highest priority
             'financial_data': ('💰 Financial', 'financial'),
             'news_data': ('📰 News', 'news'),
             'industry_data': ('🏭 Industry', 'industry'),
