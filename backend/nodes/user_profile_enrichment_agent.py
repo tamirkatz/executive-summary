@@ -88,12 +88,14 @@ Examples of enriched profiles:
 
 Guidelines:
 1. Be specific and accurate in your classifications
-2. Focus on the most relevant competitors and partners
+2. Focus on the most relevant DIRECT competitors (companies offering similar products/services to similar customers)
 3. Consider the user's role when determining what information is most important
 4. Use the additional information provided to enhance the profile
-5. If information is not available, make reasonable inferences based on the company name and industry
-6. Keep lists concise but comprehensive (max 10 items each)
-7. Ensure all fields are populated with meaningful information"""
+5. For competitors, prioritize companies that customers would compare or choose between
+6. Avoid including partners, vendors, or companies in completely different industries as competitors
+7. If information is not available, make reasonable inferences based on the company name and industry
+8. Keep lists concise but comprehensive (max 10 items each)
+9. Ensure all fields are populated with meaningful information"""
 
     async def _search_with_tavily(self, query: str, websocket_manager=None, job_id=None) -> Optional[str]:
         try:
@@ -125,7 +127,7 @@ Guidelines:
             self.logger.error(f"Company info extraction error: {e}")
             return ""
 
-    async def _find_competitors_online(self, company: str, websocket_manager=None, job_id=None) -> List[str]:
+    async def _find_competitors_with_llm(self, company: str, websocket_manager=None, job_id=None) -> List[str]:
         try:
             await self.send_status_update(
                 websocket_manager, job_id,
@@ -134,17 +136,133 @@ Guidelines:
                 result={"step": "Profile Enrichment", "substep": "competitor_analysis"}
             )
 
-            query = f"{company} main competitors"
-            response = await self.tavily.search(query=query)
-            snippets = [r["content"] for r in response["results"][:3]]
-            
-            # Use LLM to extract competitors from snippets
-            competitor_prompt = f"Extract a list of competitors for {company} from this text. Return only the company names separated by commas:\n\n{chr(10).join(snippets)}"
+            # Direct GPT query for competitor identification
+            competitor_prompt = f"""You are a business intelligence expert with comprehensive knowledge of companies and competitive landscapes.
+
+Identify the main direct competitors of {company}.
+
+Consider companies that:
+1. Operate in the same industry and market segment as {company}
+2. Offer similar products or services
+3. Target similar customer demographics
+4. Would be considered alternatives that customers compare when making purchasing decisions
+
+IMPORTANT RULES:
+- Return ONLY company names (no descriptions, explanations, or additional text)
+- Separate names with commas
+- Do NOT include {company} itself
+- Do NOT include customers, partners, suppliers, or vendors
+- Do NOT include generic terms like "startups", "companies", "businesses"
+- Focus on DIRECT competitors, not just companies in the same broad industry
+- Maximum 8 competitors
+- Use well-known, established competitor names
+
+Main competitors of {company}:"""
+
             result = await self.llm.ainvoke(competitor_prompt)
-            competitors = [c.strip() for c in result.content.split(",") if c.strip()]
-            return competitors[:10]  # Limit to 10 competitors
+            raw_competitors = result.content.strip()
+            
+            # Clean and validate extracted competitors
+            competitors = []
+            if raw_competitors:
+                potential_competitors = [c.strip() for c in raw_competitors.split(",") if c.strip()]
+                
+                for competitor in potential_competitors:
+                    # Clean up the competitor name
+                    cleaned = self._clean_competitor_name(competitor)
+                    
+                    # Validate it looks like a real company name
+                    if self._validate_competitor_name(cleaned, company):
+                        competitors.append(cleaned)
+            
+            self.logger.info(f"GPT identified {len(competitors)} competitors for {company}: {competitors}")
+            return competitors[:10]  # Limit to top 10 competitors
+            
         except Exception as e:
             self.logger.error(f"Competitor analysis error: {e}")
+            return []
+
+    def _clean_competitor_name(self, name: str) -> str:
+        """Clean and normalize competitor names."""
+        # Remove common prefixes/suffixes and clean formatting
+        name = name.strip()
+        
+        # Remove quotes and extra whitespace
+        name = name.replace('"', '').replace("'", "").strip()
+        
+        # Remove common business suffixes for cleaner names (but keep them if they're part of the brand)
+        # Don't remove if it's clearly part of the brand name
+        suffixes_to_consider = [' Inc', ' Inc.', ' Corp', ' Corp.', ' LLC', ' Ltd', ' Ltd.', ' Co', ' Co.']
+        
+        # Only remove if the name would still be meaningful without it
+        for suffix in suffixes_to_consider:
+            if name.endswith(suffix) and len(name.replace(suffix, '').strip()) > 2:
+                name = name.replace(suffix, '').strip()
+                break
+        
+        return name
+
+    def _validate_competitor_name(self, name: str, company: str) -> bool:
+        """Validate that a competitor name looks legitimate."""
+        if not name or len(name) < 2:
+            return False
+        
+        # Don't include the company itself
+        if name.lower() == company.lower():
+            return False
+        
+        # Filter out generic terms
+        generic_terms = {
+            'competitors', 'companies', 'startups', 'businesses', 'firms', 'services', 
+            'solutions', 'platforms', 'providers', 'vendors', 'others', 'alternatives',
+            'industry', 'market', 'sector', 'players', 'leaders', 'enterprises'
+        }
+        
+        if name.lower() in generic_terms:
+            return False
+        
+        # Filter out names that are too short or look like fragments
+        if len(name) < 3 or name.count(' ') > 5:  # Avoid very short names or very long descriptions
+            return False
+        
+        # Must start with a capital letter (proper company names do)
+        if not name[0].isupper():
+            return False
+        
+        return True
+
+
+
+    async def _get_fallback_competitors(self, company: str, industry: str) -> List[str]:
+        """Fallback method to identify competitors when online search fails."""
+        try:
+            fallback_prompt = f"""You are a business intelligence expert. Based on your knowledge, identify the main competitors for {company} in the {industry} industry.
+
+Consider companies that:
+1. Operate in the same market segment as {company}
+2. Offer similar products or services
+3. Target similar customer demographics
+4. Are well-known players in the {industry} space
+
+Return only the company names separated by commas, maximum 5 competitors.
+Focus on established, well-known competitors that would be considered direct rivals.
+
+Main competitors of {company}:"""
+
+            result = await self.llm.ainvoke(fallback_prompt)
+            competitors = [c.strip() for c in result.content.split(",") if c.strip()]
+            
+            # Validate fallback competitors
+            validated = []
+            for competitor in competitors:
+                cleaned = self._clean_competitor_name(competitor)
+                if self._validate_competitor_name(cleaned, company):
+                    validated.append(cleaned)
+            
+            return validated[:5]  # Return max 5 fallback competitors
+            
+        except Exception as e:
+            self.logger.error(f"Fallback competitor identification failed: {e}")
             return []
 
     async def enrich_profile_async(self, company: str, role: str, company_url: Optional[str] = None, websocket_manager=None, job_id=None) -> Dict[str, Any]:
@@ -182,10 +300,36 @@ Guidelines:
 
             enriched_data = result.model_dump()
 
-            # Replace competitors with updated online search if available
-            fresh_competitors = await self._find_competitors_online(company, websocket_manager, job_id)
-            if fresh_competitors:
-                enriched_data["competitors"] = fresh_competitors
+            # ENHANCED: Merge LLM-generated competitors from profile with direct LLM competitor query
+            llm_competitors = enriched_data.get("competitors", [])
+            fresh_competitors = await self._find_competitors_with_llm(company, websocket_manager, job_id)
+            
+            # Combine and deduplicate competitors from both sources
+            all_competitors = []
+            seen_competitors = set()
+            
+            # Prioritize fresh competitors (more accurate)
+            for competitor in fresh_competitors:
+                competitor_lower = competitor.lower()
+                if competitor_lower not in seen_competitors:
+                    all_competitors.append(competitor)
+                    seen_competitors.add(competitor_lower)
+            
+            # Add LLM competitors that aren't duplicates
+            for competitor in llm_competitors:
+                competitor_lower = competitor.lower()
+                if competitor_lower not in seen_competitors and len(all_competitors) < 10:
+                    all_competitors.append(competitor)
+                    seen_competitors.add(competitor_lower)
+            
+            # Use fallback if no competitors found
+            if len(all_competitors) == 0:
+                industry = enriched_data.get("industry", "Unknown")
+                fallback_competitors = await self._get_fallback_competitors(company, industry)
+                all_competitors.extend(fallback_competitors)
+                self.logger.info(f"Used fallback competitor identification for {company}, found: {fallback_competitors}")
+            
+            enriched_data["competitors"] = all_competitors[:10]  # Limit to top 10
 
             await self.send_status_update(
                 websocket_manager, job_id,
@@ -273,6 +417,13 @@ Guidelines:
             websocket_manager=websocket_manager,
             job_id=job_id
         )
+        
+        # Log competitor identification results for debugging
+        competitors = enriched_profile.get('competitors', [])
+        self.logger.info(f"Profile enrichment completed for {company}. Found {len(competitors)} competitors: {competitors[:5]}")
+        
+        if not competitors:
+            self.logger.warning(f"No competitors identified for {company}. This may indicate an issue with competitor discovery.")
 
         # Create ResearchState with enriched profile
         research_state = {

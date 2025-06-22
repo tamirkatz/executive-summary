@@ -267,23 +267,30 @@ Generate queries on the company fundamentals of {company} such as:
         }
 
     async def search_documents_competitor_focused(self, state: ResearchState, queries: List[str]) -> Dict[str, Any]:
-        """Specialized search method optimized for competitor intelligence with focus on recent launches and news."""
+        """Enhanced competitor intelligence search with targeted searches for main competitors."""
         competitor_documents = {}
         
-        for query in queries[:15]:  # Focus on top 15 competitor queries for quality
+        # Get company profile for targeted competitor searches
+        profile = state.get('profile', {})
+        company = state.get('company', 'Unknown Company')
+        competitors = profile.get('competitors', [])
+        
+        # PHASE 1: Execute original queries with enhanced parameters
+        for query in queries[:12]:  # Limit to top 12 for quality
             try:
                 # Enhanced search parameters for competitor intelligence
                 search_params = {
                     "query": query,
                     "search_depth": "advanced",  # Deeper search for competitor intelligence
-                    "max_results": 8,            # More results per query for competitor research
+                    "max_results": 10,           # More results per query for competitor research
                     "include_domains": [
                         "techcrunch.com", "venturebeat.com", "businesswire.com",
                         "prnewswire.com", "bloomberg.com", "reuters.com",
-                        "cnbc.com", "forbes.com", "crunchbase.com"
+                        "cnbc.com", "forbes.com", "crunchbase.com", "yahoo.com",
+                        "marketwatch.com", "fool.com", "businessinsider.com"
                     ],
                     "topic": "news",             # Focus on news for latest developments
-                    "days": 180,                 # Look for news in last 6 months
+                    "days": 240,                 # Look for news in last 8 months for more coverage
                     "include_answer": True       # Get comprehensive answers
                 }
                 
@@ -301,18 +308,27 @@ Generate queries on the company fundamentals of {company} such as:
                             title = item.get('title', '').lower()
                             content = item.get('content', '').lower()
                             
+                            # Boost for specific competitor mentions
+                            for competitor in competitors[:5]:
+                                if competitor.lower() in title or competitor.lower() in content:
+                                    score += 0.4  # Big boost for direct competitor mentions
+                                    break
+                            
                             # Boost for launch/partnership keywords
                             if any(keyword in title or keyword in content for keyword in [
                                 'launch', 'announces', 'partnership', 'integration', 
                                 'funding', 'acquisition', 'expand', 'new product',
-                                'platform', 'api', 'developer', 'strategic'
+                                'platform', 'api', 'developer', 'strategic', 'merger',
+                                'investment', 'raises', 'series', 'round'
                             ]):
-                                score += 0.3
+                                score += 0.25
                             
                             # Boost for recent dates
                             published_date = item.get('published_date', '')
                             if '2024' in published_date:
-                                score += 0.2
+                                score += 0.3
+                            elif '2023' in published_date:
+                                score += 0.15
                             
                             competitor_documents[url] = {
                                 'title': item.get('title', ''),
@@ -329,6 +345,72 @@ Generate queries on the company fundamentals of {company} such as:
                 logger.error(f"Error in competitor search for query '{query}': {e}")
                 continue
         
+        # PHASE 2: Additional targeted searches for each main competitor
+        if competitors:
+            logger.info(f"Performing targeted searches for {len(competitors[:5])} main competitors")
+            
+            for competitor in competitors[:5]:  # Focus on top 5 competitors
+                targeted_queries = [
+                    f'"{competitor}" product launch 2024',
+                    f'"{competitor}" partnership announcement 2024', 
+                    f'"{competitor}" funding news 2024',
+                    f'"{competitor}" strategic move 2024',
+                    f'"{competitor}" vs {company} comparison'
+                ]
+                
+                for targeted_query in targeted_queries:
+                    try:
+                        search_params = {
+                            "query": targeted_query,
+                            "search_depth": "advanced",
+                            "max_results": 6,
+                            "include_domains": [
+                                "techcrunch.com", "venturebeat.com", "businesswire.com",
+                                "prnewswire.com", "bloomberg.com", "reuters.com",
+                                "cnbc.com", "forbes.com", "crunchbase.com"
+                            ],
+                            "topic": "news",
+                            "days": 180,
+                            "include_answer": True
+                        }
+                        
+                        result = await self.tavily_client.search(**search_params)
+                        
+                        if result and result.get('results'):
+                            for item in result['results']:
+                                url = item.get('url', '')
+                                if url and url not in competitor_documents:
+                                    # Higher base score for targeted competitor searches
+                                    score = 0.7  
+                                    
+                                    title = item.get('title', '').lower()
+                                    content = item.get('content', '').lower()
+                                    
+                                    # Boost for the target competitor
+                                    if competitor.lower() in title or competitor.lower() in content:
+                                        score += 0.3
+                                    
+                                    published_date = item.get('published_date', '')
+                                    if '2024' in published_date:
+                                        score += 0.2
+                                    
+                                    competitor_documents[url] = {
+                                        'title': item.get('title', ''),
+                                        'snippet': item.get('content', ''),
+                                        'published_date': published_date,
+                                        'score': min(score, 1.0),
+                                        'source': 'targeted_competitor_search',
+                                        'query': targeted_query,
+                                        'url': url,
+                                        'target_competitor': competitor,
+                                        'domain': item.get('url', '').split('/')[2] if '/' in item.get('url', '') else 'unknown'
+                                    }
+                                    
+                    except Exception as e:
+                        logger.error(f"Error in targeted search for {competitor} with query '{targeted_query}': {e}")
+                        continue
+        
+        logger.info(f"Competitor intelligence search completed: {len(competitor_documents)} documents found")
         return competitor_documents
 
     async def run(self, state: ResearchState) -> Dict[str, Any]:

@@ -63,7 +63,16 @@ class QueryTemplateBuilder:
                 "{competitor} hiring patterns engineering {year}",
                 "{competitor} technology stack choices {year}",
                 "{competitor} market expansion strategy {year}",
-                "{competitor} weaknesses and challenges {year}"
+                "{competitor} partnership announcements {year}",
+                "{competitor} integration launches {year}",
+                "{competitor} api updates developer {year}",
+                "{competitor} platform expansion {year}",
+                "{competitor} strategic acquisitions {year}",
+                "{competitor} market positioning moves {year}",
+                "{competitor} pricing strategy changes {year}",
+                "{competitor} executive leadership changes {year}",
+                "{competitor} competitive threats challenges {year}",
+                "{competitor} innovation roadmap {year}"
             ],
             
             # Industry and ecosystem understanding
@@ -92,6 +101,25 @@ class QueryTemplateBuilder:
                 "{company} operational challenges {year}",
                 "{company} regulatory risks {year}",
                 "{company} financial performance {year}"
+            ],
+            
+            # Enhanced competitor intelligence - recent moves and developments
+            "competitor": [
+                "{competitor} product launch 2025",
+                "{competitor} partnership announcement 2025",
+                "{competitor} funding round 2025",
+                "{competitor} integration launch 2025",
+                "{competitor} strategic alliance 2025",
+                "{competitor} market expansion 2025",
+                "{competitor} api platform updates 2025",
+                "{competitor} acquisition deal 2025",
+                "{competitor} executive hire announcement 2025",
+                "{competitor} technology innovation 2025",
+                "{competitor} competitive positioning 2025",
+                "{competitor} business model changes 2025",
+                "{competitor} pricing updates 2025",
+                "{competitor} feature releases 2025",
+                "{competitor} developer ecosystem 2025"
             ]
         }
     
@@ -117,9 +145,9 @@ class QueryTemplateBuilder:
                 )
                 
                 for template in selected_templates:
-                    if category == "competitor_deep_research" and competitors:
-                        # Generate separate deep research queries for each competitor
-                        for competitor in competitors[:3]:  # Focus on top 3 competitors
+                    if category in ["competitor_deep_research", "competitor"] and competitors:
+                        # Generate separate queries for each competitor
+                        for competitor in competitors[:5]:  # Focus on top 5 competitors
                             query = template.format(
                                 competitor=competitor,
                                 year=year
@@ -143,35 +171,35 @@ class QueryGenerationAgent:
         self.template_builder = QueryTemplateBuilder()
         self.year = str(datetime.now().year)
         
-        # Role-specific research priorities
+        # Role-specific research priorities - COMPETITIVE INTELLIGENCE PRIORITIZED
         self.role_research_priorities = {
             "CEO": [
-                "strategic_capabilities", "market_positioning", "strategic_analysis",
-                "competitor_deep_research", "industry_ecosystem"
+                "competitor", "competitor_deep_research", "strategic_analysis", 
+                "market_positioning", "strategic_capabilities", "industry_ecosystem"
             ],
             "CFO": [
-                "strategic_analysis", "market_positioning", "competitor_deep_research",
-                "industry_ecosystem", "strategic_capabilities"
+                "competitor", "competitor_deep_research", "strategic_analysis", 
+                "market_positioning", "industry_ecosystem", "strategic_capabilities"
             ],
             "COO": [
-                "strategic_capabilities", "company_deep_dive", "strategic_analysis",
-                "competitor_deep_research", "industry_ecosystem"
+                "competitor", "competitor_deep_research", "strategic_capabilities", 
+                "strategic_analysis", "company_deep_dive", "industry_ecosystem"
             ],
             "CPO": [
-                "company_deep_dive", "strategic_capabilities", "competitor_deep_research",
-                "market_positioning", "industry_ecosystem"
+                "competitor", "competitor_deep_research", "company_deep_dive", 
+                "strategic_capabilities", "market_positioning", "industry_ecosystem"
             ],
             "CMO": [
-                "market_positioning", "competitor_deep_research", "strategic_analysis",
-                "industry_ecosystem", "company_deep_dive"
+                "competitor", "competitor_deep_research", "market_positioning", 
+                "strategic_analysis", "industry_ecosystem", "company_deep_dive"
             ],
             "CSO": [
-                "strategic_capabilities", "strategic_analysis", "competitor_deep_research",
-                "industry_ecosystem", "company_deep_dive"
+                "competitor", "competitor_deep_research", "strategic_analysis", 
+                "strategic_capabilities", "industry_ecosystem", "company_deep_dive"
             ],
             "CRO": [
-                "strategic_analysis", "industry_ecosystem", "competitor_deep_research",
-                "strategic_capabilities", "market_positioning"
+                "competitor", "competitor_deep_research", "strategic_analysis", 
+                "industry_ecosystem", "strategic_capabilities", "market_positioning"
             ]
         }
     
