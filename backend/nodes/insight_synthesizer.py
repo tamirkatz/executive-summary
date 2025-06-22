@@ -158,7 +158,7 @@ Keep it concise and actionable.
         return "\n".join(formatted)
 
     async def extract_insights_from_content(self, category: str, documents: Dict[str, Any], 
-                                          company: str, user_role: str) -> List[Dict[str, Any]]:
+                                          company: str, user_role: str, industry: str = "Unknown") -> List[Dict[str, Any]]:
         """Extract insights from a specific category of documents."""
         if not documents:
             return []
@@ -180,31 +180,55 @@ Keep it concise and actionable.
 
         # Create context-aware prompt
         prompt = f"""
-You are an expert business analyst extracting strategic insights for {company}.
-Your analysis should be relevant to someone in a {user_role} role.
+You are an expert strategic business analyst with deep domain expertise in {industry}. 
+Your analysis should provide executive-level insights for {company}, specifically relevant to someone in a {user_role} role.
 
-Analyze the following {category} documents and extract key insights:
+Analyze the following {category} documents and extract high-value strategic insights:
 
 DOCUMENTS:
 {self._format_documents_for_analysis(content_summaries)}
 
+ANALYSIS FRAMEWORK:
+For a {user_role} at {company} in the {industry} industry, extract insights that are:
+
+1. **Strategic Impact**: How does this affect {company}'s competitive position, market opportunities, or strategic direction?
+2. **Operational Implications**: What specific actions or decisions should {company} consider?
+3. **Competitive Intelligence**: How does this relate to competitor moves or market dynamics?
+4. **Industry Context**: What broader industry trends or regulatory changes are at play?
+5. **Financial Impact**: What are the potential revenue, cost, or valuation implications?
+
+SPECIFIC FOCUS AREAS for {industry}:
+- Market consolidation and M&A activity
+- Regulatory changes and compliance requirements  
+- Technology disruption and innovation trends
+- Partnership and ecosystem developments
+- Customer behavior and demand shifts
+- Competitive positioning and differentiation
+
 Extract 3-5 most important insights that are:
-1. Directly relevant to {company}'s business and strategic position
-2. Actionable for someone in a {user_role} role
-3. Not generic industry information
+- Directly actionable for {company}
+- Strategically significant (not operational details)
+- Backed by specific evidence from the documents
+- Relevant to current market conditions and {user_role} decision-making
 
 For each insight, provide:
-- summary: A concise 1-2 sentence summary
-- implication: What this means for {company}
-- relevance_score: 1-10 (10 being most relevant to {company})
-- tags: Choose 1-2 tags from: {', '.join(self.insight_tags)}
+- summary: A strategic insight statement (1-2 sentences) that explains the key finding and its significance
+- implication: Specific strategic implications for {company} - what this means for their business, competitive position, or strategic decisions
+- relevance_score: 1-10 (10 being critical strategic importance to {company})
+- tags: Choose 1-2 most relevant tags from: {', '.join(self.insight_tags)}
 - source_urls: URLs that support this insight
 - category: {category}
 
+QUALITY STANDARDS:
+- Avoid generic industry information - focus on {company}-specific implications
+- Provide specific, actionable strategic guidance
+- Connect insights to broader business strategy and competitive dynamics
+- Use evidence from documents to support conclusions
+
 Respond with insights in this exact format:
 INSIGHT 1:
-Summary: [summary text]
-Implication: [implication text]  
+Summary: [strategic insight statement]
+Implication: [specific implications for {company}]  
 Relevance Score: [1-10]
 Tags: [tag1], [tag2]
 URLs: [url1], [url2]
@@ -300,19 +324,39 @@ URLs: [url1], [url2]
 
         # Create executive summary
         summary_prompt = f"""
-Based on the following strategic insights for {company}, create an executive summary 
-for someone in a {user_role} role. Focus on the top 3-5 most critical points:
+You are a strategic advisor creating an executive briefing for a {user_role} at {company}.
+Based on the following strategic insights, create a compelling executive summary that drives decision-making:
 
 TOP INSIGHTS:
 {self._format_insights_for_summary(top_insights[:10])}
 
-Provide:
-1. A 2-3 sentence executive summary
-2. Top 3 immediate priorities/actions
-3. Key risks to monitor
-4. Key opportunities to pursue
+Create an executive summary with:
 
-Keep it concise and actionable.
+**Strategic Context**: What's happening in the market/industry that {company} needs to know about right now?
+
+**Critical Implications**: What are the 3 most important strategic implications for {company}? Focus on:
+- Competitive positioning changes
+- Market opportunities or threats
+- Strategic partnerships or M&A possibilities
+- Technology or regulatory shifts
+- Financial/operational impacts
+
+**Immediate Actions**: What should the {user_role} do or delegate in the next 30-60 days? Be specific:
+- Strategic decisions to make
+- Partnerships to explore
+- Competitive responses needed
+- Market positioning adjustments
+
+**Why This Matters Now**: What makes these insights time-sensitive? What happens if {company} doesn't act?
+
+Requirements:
+- Be specific to {company}'s situation, not generic industry advice
+- Include company names, specific technologies, or market segments where relevant
+- Focus on strategic decisions at the {user_role} level
+- Make it actionable with clear next steps
+- Keep it executive-level (strategic, not operational)
+
+Write in a confident, forward-looking tone that helps the {user_role} make informed strategic decisions.
 """
 
         try:
@@ -405,7 +449,11 @@ Keep it concise and actionable.
                         }
                     )
                 
-                insights = await self.extract_insights_from_content(category, documents, company, user_role)
+                # Get industry from state if available
+                profile = state.get('profile', {})
+                industry = profile.get('industry', 'Unknown Industry')
+                
+                insights = await self.extract_insights_from_content(category, documents, company, user_role, industry)
                 if insights:
                     all_insights.extend(insights)
                     msg.append(f"  ✓ Extracted {len(insights)} insights from {category} data")

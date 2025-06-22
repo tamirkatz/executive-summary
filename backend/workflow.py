@@ -15,7 +15,8 @@ from .nodes.researchers import (
     SpecializedResearcher,
 )
 from .nodes.interest_inference_agent import InterestInferenceAgent
-from .nodes.query_generation_agent import QueryGenerationAgent
+from .nodes.research_intent_planner import ResearchIntentPlanner
+from .nodes.query_composer import QueryComposer
 from .nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
 from .nodes.executive_report_composer import ExecutiveReportComposer
 
@@ -56,7 +57,8 @@ class Graph:
         self.insight_synthesizer = InsightSynthesizer()
         self.user_profile_enrichment_agent = UserProfileEnrichmentAgent()
         self.interest_inference_agent = InterestInferenceAgent()
-        self.query_generation_agent = QueryGenerationAgent()
+        self.research_intent_planner = ResearchIntentPlanner()
+        self.query_composer = QueryComposer()
         self.executive_report_composer = ExecutiveReportComposer()
         
         
@@ -72,7 +74,8 @@ class Graph:
         # self.workflow.add_node("grounding", self.ground.run)
         self.workflow.add_node("user_profile_enrichment", self.user_profile_enrichment_agent.run)
         self.workflow.add_node("interest_inference", self.interest_inference_agent.run)
-        self.workflow.add_node("query_generation", self.query_generation_agent.run)
+        self.workflow.add_node("research_intent_planning", self.research_intent_planner.run)
+        self.workflow.add_node("query_composition", self.query_composer.run)
         self.workflow.add_node("collector", self.collector.run)
         self.workflow.add_node("unified_researcher", self.unified_researcher.run)
         
@@ -91,11 +94,14 @@ class Graph:
         # Connect profile enrichment to interest inference
         self.workflow.add_edge("user_profile_enrichment", "interest_inference")
         
-        # Connect interest inference to query generation
-        self.workflow.add_edge("interest_inference", "query_generation")
+        # Connect interest inference to research intent planning
+        self.workflow.add_edge("interest_inference", "research_intent_planning")
         
-        # Connect query generation to collector (collect queries)
-        self.workflow.add_edge("query_generation", "collector")
+        # Connect research intent planning to query composition
+        self.workflow.add_edge("research_intent_planning", "query_composition")
+        
+        # Connect query composition to collector (collect queries)
+        self.workflow.add_edge("query_composition", "collector")
 
         # Connect collector to unified researcher (provide categorized queries)
         self.workflow.add_edge("collector", "unified_researcher")

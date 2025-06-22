@@ -21,12 +21,48 @@ class Collector:
                     result={"step": "Collecting Queries"}
                 )
         
-        # Collect generated queries from query_generation_agent
+        # Collect queries from new query composer (preferred) or legacy query generation agent
+        structured_queries: List[Dict[str, Any]] = state.get('queries', [])
+        query_composition_complete: bool = state.get('query_composition_complete', False)
+        
+        # Legacy support for old query generation agent
         generated_queries: List[str] = state.get('generated_queries', [])
         query_generation_complete: bool = state.get('query_generation_complete', False)
         
-        if query_generation_complete and generated_queries:
-            msg.append(f"✅ Query Generation Complete: {len(generated_queries)} queries collected")
+        if query_composition_complete and structured_queries:
+            # Use new structured queries from QueryComposer
+            msg.append(f"✅ Query Composition Complete: {len(structured_queries)} surgical queries collected")
+            
+            # Convert structured queries to categorized format
+            categorized_queries = self._categorize_structured_queries(structured_queries)
+            
+            # Also maintain legacy format for backward compatibility
+            legacy_queries = [q.get('query', '') for q in structured_queries]
+            state['generated_queries'] = legacy_queries
+            
+            # Update state with categorized queries
+            state['categorized_queries'] = categorized_queries
+            state['total_queries'] = len(structured_queries)
+            state['query_collection_complete'] = True
+            
+            # Log query categories and intent topics
+            intent_topics = {}
+            for query in structured_queries:
+                topic = query.get('intent_topic', 'Unknown')
+                intent_topics[topic] = intent_topics.get(topic, 0) + 1
+            
+            msg.append("📋 Queries by Research Intent:")
+            for topic, count in intent_topics.items():
+                msg.append(f"  • {topic}: {count} queries")
+            
+            msg.append("📊 Queries by Category:")
+            for category, queries in categorized_queries.items():
+                if queries:
+                    msg.append(f"  • {category}: {len(queries)} queries")
+                    
+        elif query_generation_complete and generated_queries:
+            # Fallback to legacy query generation agent
+            msg.append(f"✅ Legacy Query Generation Complete: {len(generated_queries)} queries collected")
             
             # Categorize queries for better organization
             categorized_queries = self._categorize_queries(generated_queries)
@@ -41,7 +77,7 @@ class Collector:
                 if queries:
                     msg.append(f"• {category}: {len(queries)} queries")
         else:
-            msg.append("⚠️ No queries found from query generation agent")
+            msg.append("⚠️ No queries found from query composition or generation agents")
             state['categorized_queries'] = {}
             state['total_queries'] = 0
             state['query_collection_complete'] = False
@@ -52,6 +88,79 @@ class Collector:
         state['messages'] = messages
         
         return state
+
+    def _categorize_structured_queries(self, structured_queries: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+        """Categorize structured queries based on their query_type and target_type."""
+        categories = {
+            'financial': [],
+            'news': [],
+            'company': [],
+            'technology': [],
+            'market': [],
+            'competitor': [],
+            'partnership': [],
+            'regulatory': [],
+            'geopolitical': [],
+            'risk': [],
+            'opportunity': [],
+            'documentation': [],
+            'strategic': [],
+            'general': []
+        }
+        
+        for query_obj in structured_queries:
+            query = query_obj.get('query', '')
+            query_type = query_obj.get('query_type', '').lower()
+            target_type = query_obj.get('target_type', '').lower()
+            intent_topic = query_obj.get('intent_topic', '').lower()
+            
+            # Categorize based on query_type first
+            if query_type == 'documentation':
+                categories['documentation'].append(query)
+            elif query_type == 'financial':
+                categories['financial'].append(query)
+            elif query_type == 'news':
+                categories['news'].append(query)
+            elif query_type == 'technical':
+                categories['technology'].append(query)
+            elif query_type == 'strategic':
+                categories['strategic'].append(query)
+            # Categorize based on target_type
+            elif target_type == 'competitor':
+                categories['competitor'].append(query)
+            elif target_type == 'company':
+                categories['company'].append(query)
+            elif target_type == 'market' or target_type == 'industry':
+                categories['market'].append(query)
+            # Categorize based on intent topic keywords
+            elif any(keyword in intent_topic for keyword in ['partnership', 'alliance', 'collaboration']):
+                categories['partnership'].append(query)
+            elif any(keyword in intent_topic for keyword in ['regulatory', 'compliance', 'legal']):
+                categories['regulatory'].append(query)
+            elif any(keyword in intent_topic for keyword in ['risk', 'threat', 'vulnerability']):
+                categories['risk'].append(query)
+            elif any(keyword in intent_topic for keyword in ['opportunity', 'growth', 'expansion']):
+                categories['opportunity'].append(query)
+            # Fallback to content-based categorization
+            else:
+                query_lower = query.lower()
+                if any(keyword in query_lower for keyword in [
+                    'financial', 'funding', 'revenue', 'valuation', 'investor'
+                ]):
+                    categories['financial'].append(query)
+                elif any(keyword in query_lower for keyword in [
+                    'news', 'announcement', 'press release', 'recent', 'latest'
+                ]):
+                    categories['news'].append(query)
+                elif any(keyword in query_lower for keyword in [
+                    'technology', 'ai', 'digital', 'software', 'api'
+                ]):
+                    categories['technology'].append(query)
+                else:
+                    categories['general'].append(query)
+        
+        # Remove empty categories
+        return {k: v for k, v in categories.items() if v}
 
     def _categorize_queries(self, queries: List[str]) -> Dict[str, List[str]]:
         """Categorize queries based on their content and keywords."""

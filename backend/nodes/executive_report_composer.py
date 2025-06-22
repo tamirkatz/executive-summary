@@ -23,35 +23,40 @@ class ExecutiveReportComposer:
         
         # Executive report sections based on user role and content
         self.section_templates = {
-            "market_outlook": {
-                "title": "Market Outlook",
-                "description": "Relevant macro trends and regulatory updates",
-                "tags": ["trend", "market_signal", "regulatory_change"]
+            "executive_summary": {
+                "title": "🧠 Executive Summary (1-minute read)",
+                "description": "Top 3 takeaways, recommended actions, and business relevance",
+                "tags": ["strategic_impact", "executive_decision", "business_relevance"]
             },
-            "opportunities": {
-                "title": "Opportunities to Watch", 
-                "description": "New markets, partnerships, and product trends",
-                "tags": ["opportunity", "expansion", "partnership", "innovation"]
+            "company_performance": {
+                "title": "📊 Company Performance & Signals",
+                "description": "Product/engineering highlights, customer trends, hiring & talent, investor/board mentions",
+                "tags": ["product_launch", "customer_trend", "hiring", "investor_mention", "performance"]
             },
-            "risks": {
-                "title": "Risks and Red Flags",
-                "description": "Competitor moves, negative signals, potential disruptors", 
-                "tags": ["threat", "risk", "competitive_advantage"]
+            "market_trends": {
+                "title": "🌍 Market & Industry Trends",
+                "description": "Emerging technologies, shifts in buyer behavior, macro trends",
+                "tags": ["trend", "market_signal", "regulatory_change", "technology", "buyer_behavior"]
             },
-            "competitor_highlights": {
-                "title": "Competitor Highlights",
-                "description": "Curated competitor actions, funding, product launches",
-                "tags": ["strategic_move", "competitive_advantage", "innovation"]
+            "competitor_moves": {
+                "title": "🔥 Competitor & Adjacent Player Moves",
+                "description": "Competitor launches/pivots, partnerships/M&A, funding announcements, hiring trends",
+                "tags": ["strategic_move", "competitive_advantage", "partnership", "funding", "acquisition"]
             },
-            "strategic_insights": {
-                "title": "Strategic Recommendations",
-                "description": "Tailored suggestions and strategic implications",
-                "tags": ["strategic_move", "opportunity", "financial_impact"]
+            "opportunities_threats": {
+                "title": "🕵️‍♂️ Emerging Opportunities & Threats",
+                "description": "High-potential partnerships, new GTM angles, market saturation signals, customer complaints",
+                "tags": ["opportunity", "threat", "partnership", "market_saturation", "customer_feedback"]
             },
-            "industry_news": {
-                "title": "Industry News Summary",
-                "description": "Fast-scroll section of curated headlines",
-                "tags": ["trend", "market_signal", "innovation"]
+            "strategic_recommendations": {
+                "title": "📌 Strategic Recommendations",
+                "description": "3-5 AI-synthesized strategic suggestions with specific actions",
+                "tags": ["strategic_move", "opportunity", "financial_impact", "recommendation"]
+            },
+            "appendix": {
+                "title": "🧾 Appendix",
+                "description": "Sources, links, long-form insights, graphs, screenshots",
+                "tags": ["source", "link", "detailed_insight"]
             }
         }
 
@@ -191,18 +196,46 @@ class ExecutiveReportComposer:
         """Determine the best section for an insight based on its tags and context."""
         # Priority mapping for different tags
         tag_section_map = {
-            'opportunity': 'opportunities',
-            'threat': 'risks',
-            'risk': 'risks', 
-            'strategic_move': 'competitor_highlights',
-            'competitive_advantage': 'competitor_highlights',
-            'trend': 'market_outlook',
-            'market_signal': 'market_outlook',
-            'regulatory_change': 'market_outlook',
-            'financial_impact': 'strategic_insights',
-            'innovation': 'opportunities',
-            'partnership': 'opportunities',
-            'expansion': 'opportunities'
+            # Executive Summary
+            'strategic_impact': 'executive_summary',
+            'executive_decision': 'executive_summary',
+            'business_relevance': 'executive_summary',
+            
+            # Company Performance
+            'product_launch': 'company_performance',
+            'customer_trend': 'company_performance',
+            'hiring': 'company_performance',
+            'investor_mention': 'company_performance',
+            'performance': 'company_performance',
+            
+            # Market Trends
+            'trend': 'market_trends',
+            'market_signal': 'market_trends',
+            'regulatory_change': 'market_trends',
+            'technology': 'market_trends',
+            'buyer_behavior': 'market_trends',
+            
+            # Competitor Moves
+            'strategic_move': 'competitor_moves',
+            'competitive_advantage': 'competitor_moves',
+            'partnership': 'competitor_moves',
+            'funding': 'competitor_moves',
+            'acquisition': 'competitor_moves',
+            
+            # Opportunities & Threats
+            'opportunity': 'opportunities_threats',
+            'threat': 'opportunities_threats',
+            'market_saturation': 'opportunities_threats',
+            'customer_feedback': 'opportunities_threats',
+            
+            # Strategic Recommendations
+            'financial_impact': 'strategic_recommendations',
+            'recommendation': 'strategic_recommendations',
+            
+            # Appendix
+            'source': 'appendix',
+            'link': 'appendix',
+            'detailed_insight': 'appendix'
         }
         
         # Check tags for best match
@@ -212,11 +245,15 @@ class ExecutiveReportComposer:
         
         # Fallback based on category
         if category == 'news':
-            return 'industry_news'
+            return 'market_trends'
         elif category == 'financial':
-            return 'strategic_insights'
+            return 'strategic_recommendations'
+        elif category == 'product':
+            return 'company_performance'
+        elif category == 'competitor':
+            return 'competitor_moves'
         else:
-            return 'strategic_insights'  # Default section
+            return 'strategic_recommendations'  # Default section
 
     async def generate_executive_report(self, company: str, user_role: str, 
                                       executive_summary: str, sections: Dict[str, List[Dict[str, Any]]], 
@@ -254,26 +291,71 @@ EXECUTIVE SUMMARY:
 ORGANIZED INSIGHTS:
 {self.format_sections_for_prompt(sections_content)}
 
-Create a compelling, scannable executive report (~10 minute read) with the following requirements:
+Create a compelling, scannable executive report following this EXACT format:
 
-1. **Report Structure**: 4-6 clear sections with executive-style titles
-2. **Audience**: Written for {user_role} - focus on strategic implications relevant to this role
-3. **Tone**: Professional, confident, forward-looking
-4. **Length**: Comprehensive but digestible (~2000-3000 words)
-5. **Decision Support**: Include actionable insights with prompts like "Consider...", "This could be an opportunity to..."
+# 🧠 Executive Summary (1-minute read)
+**Top 3 Takeaways** – Summary of the most impactful insights.
+**Recommended Actions** – What the {user_role} should do or delegate.
+**Business Relevance** – Why this matters now.
 
-SECTIONS TO INCLUDE (select 4-6 most relevant):
-{self.format_section_templates()}
+# 📊 Company Performance & Signals
+(If connected to internal metrics or relevant public signals)
 
-FORMATTING REQUIREMENTS:
-- Use clear section headers with emoji indicators
-- Include bullet points for scannable content
-- Add strategic implications for each major point
-- Include forward-looking perspectives
-- End each section with 1-2 actionable recommendations
+**Product / Engineering Highlights**
+- New product launches, outages, releases (if public)
+
+**Customer Trends**
+- New logos, churn risk signals, major feedback
+
+**Hiring & Talent**
+- Key hires, exits, headcount growth (public signals or LinkedIn data)
+
+**Investor/Board Mentions**
+- Press or online mentions of investors or related moves
+
+# 🌍 Market & Industry Trends
+**Emerging Technologies**
+- New tools, protocols, or platforms rising in usage or hype
+
+**Shifts in Buyer Behavior**
+- New procurement patterns, budget cuts, interest in certain features
+
+**Macro Trends**
+- Regulation, economic shifts, funding climate (e.g. AI, cybersecurity)
+
+# 🔥 Competitor & Adjacent Player Moves
+**Competitor Launches / Pivots**
+
+**Partnerships / M&A**
+
+**Funding Announcements**
+
+**Hiring Trends / Talent War Signals**
+
+Optionally, highlight with:
+✅ Why this matters
+⚠️ Threat level or opportunity level
+💡 Suggested response or positioning
+
+# 🕵️‍♂️ Emerging Opportunities & Threats
+- High-potential partnerships
+- New GTM angles
+- Signals of market saturation or category decline
+- Customer complaints in competitor ecosystems
+
+# 📌 Strategic Recommendations
+3–5 AI-synthesized strategic suggestions
+
+E.g., "Explore partnerships in [category] with [relevant_copmany], due to [trend]."
+"Start positioning around [keyword] to capture interest from [market]."
+"Consider internal review of [tech stack/hiring pipeline], given [insight]."
+
+# 🧾 Appendix (Optional)
+Sources, links, long-form insights, graphs, screenshots
 
 Focus on insights most relevant to {company}'s strategic position and {user_role}'s decision-making needs.
 Avoid generic industry information - keep everything company-specific and actionable.
+Use the organized insights provided to populate each section appropriately.
 """
 
         try:
@@ -289,19 +371,36 @@ Avoid generic industry information - keep everything company-specific and action
             return f"Error generating executive report: {str(e)}"
 
     def extract_company_context(self, state: ResearchState) -> str:
-        """Extract relevant company context from the research state."""
+        """Extract comprehensive company context from the research state."""
         context_pieces = []
         
         company = state.get('company', '')
         if company:
             context_pieces.append(f"Company: {company}")
             
-        # Add any other relevant context from state
+        # Add detailed profile information
         if profile := state.get('profile', {}):
             if industry := profile.get('industry'):
                 context_pieces.append(f"Industry: {industry}")
-            if location := profile.get('location'):
-                context_pieces.append(f"Location: {location}")
+            if sector := profile.get('sector'):
+                context_pieces.append(f"Sector: {sector}")
+            if description := profile.get('description'):
+                context_pieces.append(f"Business Description: {description}")
+            if competitors := profile.get('competitors'):
+                context_pieces.append(f"Key Competitors: {', '.join(competitors[:5])}")
+            if clients := profile.get('known_clients'):
+                context_pieces.append(f"Notable Clients: {', '.join(clients[:5])}")
+            if partners := profile.get('partners'):
+                context_pieces.append(f"Strategic Partners: {', '.join(partners[:5])}")
+            if client_industries := profile.get('clients_industries'):
+                context_pieces.append(f"Client Industries: {', '.join(client_industries[:5])}")
+        
+        # Add user interests context
+        if user_interests := state.get('user_interests', {}):
+            if strategic_interests := user_interests.get('strategic_interests'):
+                context_pieces.append(f"Strategic Focus Areas: {', '.join(strategic_interests[:5])}")
+            if tech_interests := user_interests.get('technology_interests'):
+                context_pieces.append(f"Technology Interests: {', '.join(tech_interests[:5])}")
         
         return "\n".join(context_pieces) if context_pieces else "Limited company context available"
 
@@ -331,8 +430,6 @@ Avoid generic industry information - keep everything company-specific and action
 **Prepared for:** {user_role}  
 **Date:** {timestamp}  
 **Report Type:** Strategic Intelligence Briefing
-
----
 
 """
         
