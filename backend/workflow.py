@@ -18,16 +18,19 @@ from .nodes.interest_inference_agent import InterestInferenceAgent
 from .nodes.research_intent_planner import ResearchIntentPlanner
 from .nodes.query_composer import QueryComposer
 from .nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
+from .nodes.profile_enrichment_orchestrator import ProfileEnrichmentOrchestrator
 from .nodes.executive_report_composer import ExecutiveReportComposer
 
 logger = logging.getLogger(__name__)
 
 class Graph:
     def __init__(self, company=None, url=None, user_role=None,
-                 websocket_manager=None, job_id=None, include_specialized_research=False):
+                 websocket_manager=None, job_id=None, include_specialized_research=False,
+                 use_enhanced_profile_enrichment=True):
         self.websocket_manager = websocket_manager
         self.job_id = job_id
         self.include_specialized_research = include_specialized_research
+        self.use_enhanced_profile_enrichment = use_enhanced_profile_enrichment
         
         # Initialize ResearchState with default values from the state definition
         from .classes.state import default_research_state
@@ -55,12 +58,13 @@ class Graph:
         self.curator = Curator()
         self.enricher = Enricher()
         self.insight_synthesizer = InsightSynthesizer()
-        self.user_profile_enrichment_agent = UserProfileEnrichmentAgent()
+        
+        self.profile_enrichment_agent = ProfileEnrichmentOrchestrator()
+            
         self.interest_inference_agent = InterestInferenceAgent()
         self.research_intent_planner = ResearchIntentPlanner()
         self.query_composer = QueryComposer()
         self.executive_report_composer = ExecutiveReportComposer()
-        
         
         # Optional specialized researcher
         if self.include_specialized_research:
@@ -72,7 +76,7 @@ class Graph:
         
         # Add nodes with their respective processing functions
         # self.workflow.add_node("grounding", self.ground.run)
-        self.workflow.add_node("user_profile_enrichment", self.user_profile_enrichment_agent.run)
+        self.workflow.add_node("user_profile_enrichment", self.profile_enrichment_agent.run)
         self.workflow.add_node("interest_inference", self.interest_inference_agent.run)
         self.workflow.add_node("research_intent_planning", self.research_intent_planner.run)
         self.workflow.add_node("query_composition", self.query_composer.run)

@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from backend.config import config
 from tavily import AsyncTavilyClient
+from .competitor_discovery_agent import FocusedCompetitorDiscoveryAgent
 from ..classes import InputState, ResearchState
 from ..agents.base_agent import BaseAgent
 
@@ -35,6 +36,9 @@ class UserProfileEnrichmentAgent(BaseAgent):
         )
 
         self.tavily = AsyncTavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+        
+        # Initialize the focused competitor discovery agent
+        self.competitor_agent = FocusedCompetitorDiscoveryAgent(model_name)
 
         self.examples = [
             {
@@ -58,6 +62,17 @@ class UserProfileEnrichmentAgent(BaseAgent):
                 "competitors": ["Anthropic", "Google DeepMind", "Microsoft", "Meta AI", "Cohere"],
                 "known_clients": ["Microsoft", "GitHub", "Shopify", "Snapchat", "Duolingo"],
                 "partners": ["Microsoft", "GitHub", "Salesforce", "Shopify"]
+            },
+            {
+                "company": "Algolia",
+                "role": "CTO",
+                "description": "Algolia is a search-as-a-service platform that provides APIs for building fast, relevant search experiences in applications and websites.",
+                "industry": "Search Technology",
+                "sector": "API Services",
+                "clients_industries": ["E-commerce", "SaaS", "Media", "Enterprise Software"],
+                "competitors": ["Elasticsearch", "Swiftype", "Amazon CloudSearch", "Google Site Search"],
+                "known_clients": ["Medium", "Stripe", "Twitch", "Periscope", "Product Hunt"],
+                "partners": ["Shopify", "Magento", "WordPress", "Netlify"]
             }
         ]
 
@@ -87,15 +102,22 @@ Examples of enriched profiles:
 {examples_text}
 
 Guidelines:
-1. Be specific and accurate in your classifications
-2. Focus on the most relevant DIRECT competitors (companies offering similar products/services to similar customers)
-3. Consider the user's role when determining what information is most important
-4. Use the additional information provided to enhance the profile
-5. For competitors, prioritize companies that customers would compare or choose between
+1. FIRST and MOST IMPORTANT: Carefully read the additional information to understand what the company actually does
+2. Use the business description to accurately determine the industry and sector (don't assume based on company name alone)
+3. Be specific and accurate in your classifications based on actual business activities:
+   - API/Search companies: "Search Technology", "API Services", or "Developer Tools"
+   - AI/ML platforms: "Artificial Intelligence" or "Machine Learning Platform"  
+   - SaaS tools: "Software as a Service" or specific vertical (e.g., "Marketing Technology")
+   - E-commerce: "E-commerce Platform" or "Online Retail"
+   - Fintech: "Financial Technology" or specific area (e.g., "Payment Processing")
+4. Focus on the most relevant DIRECT competitors (companies offering similar products/services to similar customers)
+5. For competitors, prioritize companies that customers would compare or choose between in the SAME business model/industry
 6. Avoid including partners, vendors, or companies in completely different industries as competitors
-7. If information is not available, make reasonable inferences based on the company name and industry
-8. Keep lists concise but comprehensive (max 10 items each)
-9. Ensure all fields are populated with meaningful information"""
+7. If the company provides APIs or technical services, focus on similar API/technology competitors, not end-user applications
+8. Consider the user's role when determining what information is most important
+9. Keep lists concise but comprehensive (max 10 items each)
+10. Ensure all fields are populated with meaningful information based on actual business activities
+11. For technology companies, be precise about their technology focus in both industry and sector fields"""
 
     async def _search_with_tavily(self, query: str, websocket_manager=None, job_id=None) -> Optional[str]:
         try:
@@ -113,21 +135,164 @@ Guidelines:
             return None
 
     async def _scrape_company_info(self, url: str, websocket_manager=None, job_id=None) -> str:
+        """Enhanced company information extraction using comprehensive Tavily crawling."""
         try:
             await self.send_status_update(
                 websocket_manager, job_id,
                 status="processing",
-                message=f"Extracting company information from {url}",
-                result={"step": "Profile Enrichment", "substep": "extracting"}
+                message=f"Deep crawling business information from {url}",
+                result={"step": "Profile Enrichment", "substep": "deep_extraction"}
             )
 
-            response = await self.tavily.search(query=f"site:{url} company description OR about us")
-            return response["results"][0]["content"] if response["results"] else ""
+            # Step 1: Multi-angle business information gathering
+            business_info_sources = []
+            
+            # Try direct website crawling first
+            try:
+                crawl_response = await self.tavily.search(
+                    query=f"site:{url}",
+                    search_depth="advanced",
+                    max_results=5,
+                    include_answer=True,
+                    include_raw_content=True
+                )
+                if crawl_response.get("results"):
+                    for result in crawl_response["results"]:
+                        if result.get("content"):
+                            business_info_sources.append({
+                                "source": "direct_crawl",
+                                "content": result["content"],
+                                "url": result.get("url", url)
+                            })
+            except Exception as e:
+                self.logger.warning(f"Direct crawl failed for {url}: {e}")
+
+            # Step 2: Targeted business description search
+            targeted_queries = [
+                f"site:{url} \"what we do\" OR \"about us\" OR \"company overview\"",
+                f"site:{url} \"our mission\" OR \"our vision\" OR \"our products\"",
+                f"site:{url} \"services\" OR \"solutions\" OR \"platform\"",
+                f"site:{url} \"technology\" OR \"API\" OR \"software\""
+            ]
+
+            for query in targeted_queries:
+                try:
+                    response = await self.tavily.search(
+                        query=query,
+                        max_results=3,
+                        include_answer=True
+                    )
+                    if response.get("results"):
+                        for result in response["results"]:
+                            if result.get("content"):
+                                business_info_sources.append({
+                                    "source": "targeted_search",
+                                    "content": result["content"],
+                                    "query": query
+                                })
+                except Exception as e:
+                    self.logger.warning(f"Targeted search failed for query {query}: {e}")
+
+            # Step 3: Extract and synthesize business description
+            if business_info_sources:
+                business_description = await self._synthesize_business_description(
+                    business_info_sources, url, websocket_manager, job_id
+                )
+                return business_description
+            else:
+                # Fallback: Company name search
+                return await self._fallback_company_search(url, websocket_manager, job_id)
+
         except Exception as e:
-            self.logger.error(f"Company info extraction error: {e}")
+            self.logger.error(f"Enhanced company info extraction error for {url}: {e}")
+            return await self._fallback_company_search(url, websocket_manager, job_id)
+
+    async def _synthesize_business_description(self, sources: List[Dict], url: str, websocket_manager=None, job_id=None) -> str:
+        """Synthesize accurate business description from multiple sources."""
+        try:
+            await self.send_status_update(
+                websocket_manager, job_id,
+                status="processing",
+                message="Synthesizing business description from multiple sources",
+                result={"step": "Profile Enrichment", "substep": "synthesis"}
+            )
+
+            # Combine all content
+            all_content = []
+            for source in sources:
+                content = source.get("content", "").strip()
+                if content and len(content) > 50:  # Filter out very short content
+                    all_content.append(content)
+
+            if not all_content:
+                return ""
+
+            # Use LLM to extract and synthesize the core business description
+            synthesis_prompt = f"""You are a business intelligence expert analyzing company information.
+
+Website: {url}
+Raw Content Sources: {len(all_content)} sources
+
+Content to analyze:
+{chr(10).join([f"Source {i+1}: {content[:500]}..." for i, content in enumerate(all_content)])}
+
+Extract the most accurate, concise business description that clearly explains:
+1. What this company actually does (products/services)
+2. Their primary business model (B2B, B2C, API, SaaS, etc.)
+3. Their target market/customers
+4. Their key technology or approach (if technical company)
+
+CRITICAL INSTRUCTIONS:
+- Focus on FACTUAL business activities, not marketing language
+- If it's a technology company, clearly identify the technology type (AI, search, API, etc.)
+- If it's an API/service provider, specify what the API/service does
+- Avoid generic terms like "innovative solutions" or "cutting-edge"
+- Be specific about the actual product or service offered
+- Maximum 2-3 sentences but be comprehensive
+
+Business Description:"""
+
+            result = await self.llm.ainvoke(synthesis_prompt)
+            business_description = result.content.strip()
+            
+            self.logger.info(f"Synthesized business description for {url}: {business_description[:100]}...")
+            return business_description
+
+        except Exception as e:
+            self.logger.error(f"Business description synthesis error: {e}")
+            return " ".join(all_content)[:500] if all_content else ""
+
+    async def _fallback_company_search(self, url: str, websocket_manager=None, job_id=None) -> str:
+        """Fallback method for company information when direct crawling fails."""
+        try:
+            await self.send_status_update(
+                websocket_manager, job_id,
+                status="processing",
+                message="Using fallback business information search",
+                result={"step": "Profile Enrichment", "substep": "fallback_search"}
+            )
+
+            # Extract company name from URL
+            company_name = url.replace("https://", "").replace("http://", "").replace("www.", "").split(".")[0]
+            
+            # Search for company information
+            fallback_query = f'"{company_name}" company business model what they do products services'
+            response = await self.tavily.search(
+                query=fallback_query,
+                max_results=3,
+                include_answer=True
+            )
+            
+            if response.get("results") and response["results"][0].get("content"):
+                return response["results"][0]["content"]
+            
+            return ""
+            
+        except Exception as e:
+            self.logger.error(f"Fallback company search error: {e}")
             return ""
 
-    async def _find_competitors_with_llm(self, company: str, websocket_manager=None, job_id=None) -> List[str]:
+    async def _find_competitors_with_llm(self, company: str, company_description: str = "", industry: str = "", websocket_manager=None, job_id=None) -> List[str]:
         try:
             await self.send_status_update(
                 websocket_manager, job_id,
@@ -136,26 +301,36 @@ Guidelines:
                 result={"step": "Profile Enrichment", "substep": "competitor_analysis"}
             )
 
-            # Direct GPT query for competitor identification
+            # Enhanced competitor identification with company context
             competitor_prompt = f"""You are a business intelligence expert with comprehensive knowledge of companies and competitive landscapes.
 
-Identify the main direct competitors of {company}.
+Company Information:
+- Company Name: {company}
+- Business Description: {company_description or "Not available"}
+- Industry: {industry or "Not specified"}
+
+Based on this information, identify the main DIRECT competitors of {company}.
 
 Consider companies that:
 1. Operate in the same industry and market segment as {company}
-2. Offer similar products or services
+2. Offer similar products or services to what {company} offers
 3. Target similar customer demographics
 4. Would be considered alternatives that customers compare when making purchasing decisions
+5. Have similar business models or value propositions
 
-IMPORTANT RULES:
+CRITICAL INSTRUCTIONS:
+- If {company} provides AI/search/API services, focus on AI search API competitors, NOT travel companies
+- If {company} is in technology/software, find technology competitors, NOT unrelated industries
+- Use the business description to understand what {company} actually does
 - Return ONLY company names (no descriptions, explanations, or additional text)
 - Separate names with commas
 - Do NOT include {company} itself
 - Do NOT include customers, partners, suppliers, or vendors
 - Do NOT include generic terms like "startups", "companies", "businesses"
-- Focus on DIRECT competitors, not just companies in the same broad industry
+- Focus on DIRECT competitors offering similar services/products
 - Maximum 8 competitors
 - Use well-known, established competitor names
+- If uncertain about the business model, be conservative and return fewer competitors
 
 Main competitors of {company}:"""
 
@@ -175,7 +350,7 @@ Main competitors of {company}:"""
                     if self._validate_competitor_name(cleaned, company):
                         competitors.append(cleaned)
             
-            self.logger.info(f"GPT identified {len(competitors)} competitors for {company}: {competitors}")
+            self.logger.info(f"GPT identified {len(competitors)} competitors for {company} (industry: {industry}): {competitors}")
             return competitors[:10]  # Limit to top 10 competitors
             
         except Exception as e:
@@ -300,16 +475,33 @@ Main competitors of {company}:"""
 
             enriched_data = result.model_dump()
 
-            # ENHANCED: Merge LLM-generated competitors from profile with direct LLM competitor query
-            llm_competitors = enriched_data.get("competitors", [])
-            fresh_competitors = await self._find_competitors_with_llm(company, websocket_manager, job_id)
+            # ENHANCED: Use focused competitor discovery agent
+            company_description = enriched_data.get("description", "") or additional_info
+            industry = enriched_data.get("industry", "Technology")
+            sector = enriched_data.get("sector", "Software")
             
-            # Combine and deduplicate competitors from both sources
+            # Use the focused competitor discovery agent
+            discovery_result = await self.competitor_agent.discover_competitors(
+                company=company,
+                description=company_description,
+                industry=industry,
+                sector=sector,
+                websocket_manager=websocket_manager,
+                job_id=job_id
+            )
+            
+            # Extract competitors from discovery result
+            discovered_competitors = discovery_result.get("competitors", [])
+            
+            # Merge with any LLM-generated competitors from profile
+            llm_competitors = enriched_data.get("competitors", [])
+            
+            # Combine and deduplicate competitors
             all_competitors = []
             seen_competitors = set()
             
-            # Prioritize fresh competitors (more accurate)
-            for competitor in fresh_competitors:
+            # Prioritize discovered competitors (more accurate)
+            for competitor in discovered_competitors:
                 competitor_lower = competitor.lower()
                 if competitor_lower not in seen_competitors:
                     all_competitors.append(competitor)
@@ -321,13 +513,6 @@ Main competitors of {company}:"""
                 if competitor_lower not in seen_competitors and len(all_competitors) < 10:
                     all_competitors.append(competitor)
                     seen_competitors.add(competitor_lower)
-            
-            # Use fallback if no competitors found
-            if len(all_competitors) == 0:
-                industry = enriched_data.get("industry", "Unknown")
-                fallback_competitors = await self._get_fallback_competitors(company, industry)
-                all_competitors.extend(fallback_competitors)
-                self.logger.info(f"Used fallback competitor identification for {company}, found: {fallback_competitors}")
             
             enriched_data["competitors"] = all_competitors[:10]  # Limit to top 10
 
