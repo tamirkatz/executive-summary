@@ -1,0 +1,309 @@
+2025-06-26 13:28:15,508 - __main__ - INFO - ============================================================
+2025-06-26 13:28:15,509 - __main__ - INFO - TESTING COMPETITOR DISCOVERY FOR TAVILY
+2025-06-26 13:28:15,509 - __main__ - INFO - ============================================================
+2025-06-26 13:28:15,509 - __main__ - INFO - Profile: {
+  "company": "Tavily",
+  "description": "AI-powered search API for developers and researchers, providing real-time web search with AI-enhanced results",
+  "industry": "Technology",
+  "sector": "AI Search",
+  "core_products": [
+    "Search API",
+    "AI Search Engine",
+    "Research Assistant"
+  ],
+  "use_cases": [
+    "Developer tools",
+    "Research automation",
+    "AI applications"
+  ],
+  "customer_segments": [
+    "Developers",
+    "Researchers",
+    "AI companies"
+  ],
+  "synonyms": [
+    "AI search",
+    "search API",
+    "intelligent search"
+  ]
+}
+2025-06-26 13:28:15,511 - __main__ - INFO - Expected good competitors: ['Perplexity', 'SearchGPT', 'You.com', 'Exa', 'Metaphor', 'Bing Chat', 'Phind', 'Kagi']
+2025-06-26 13:28:15,512 - __main__ - INFO - Should avoid: ['Google', 'Microsoft', 'Amazon', 'Apple', 'Meta', 'Facebook', 'IBM', 'Oracle']
+2025-06-26 13:28:34,909 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:28:34,987 - backend.agents.enhanced_competitor_discovery_agent - INFO - LLM generated 20 intelligent queries for Tavily
+2025-06-26 13:28:37,430 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:37,451 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:37,618 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:37,686 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:37,831 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:40,595 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:40,808 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:40,874 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:41,247 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:41,320 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:44,230 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:44,279 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:44,598 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:44,772 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:44,839 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:48,016 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:48,060 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:48,078 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:48,239 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:55,070 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:28:55,072 - backend.agents.enhanced_competitor_discovery_agent - INFO - Completed 20 searches, got 100 total results
+2025-06-26 13:29:02,124 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:09,076 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:17,553 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:28,266 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:33,595 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:40,235 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:44,775 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:29:56,555 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:13,296 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:19,178 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:23,967 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:30,529 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:30,529 - backend.agents.enhanced_competitor_discovery_agent - INFO - Extracted 26 unique potential competitors
+2025-06-26 13:30:32,856 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:33,426 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:33,914 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:35,919 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:36,427 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:36,895 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:38,424 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:38,693 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:39,162 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:30:49,611 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:49,614 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Poe: 0.3
+2025-06-26 13:30:49,615 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Poe: {'name': 'Poe', 'description': '', 'reasoning': '', 'confidence_score': 0.3, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:30:49,615 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Poe due to low confidence: 0.3
+2025-06-26 13:30:50,228 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:50,230 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Unbxd: 0.3
+2025-06-26 13:30:50,230 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Unbxd: {'name': 'Unbxd', 'description': '', 'reasoning': '', 'confidence_score': 0.3, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:30:50,230 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Unbxd due to low confidence: 0.3
+2025-06-26 13:30:59,489 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:30:59,506 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for LINER AI: 0.3
+2025-06-26 13:30:59,506 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for LINER AI: {'name': 'LINER AI', 'description': 'LINER provides a browser extension and mobile app that layers AI summaries, highlights, and writing assistance on top of traditional web-search results for end users, acting as a personal research and drafting assistant rather than an embeddable search infrastructure service.', 'reasoning': 'Although LINER is a small startup that markets an “AI Search Engine,” its product is a consumer productivity tool (Chrome/Edge/Safari extension and mobile app). Tavily, by contrast, sells an AI-powered real-time web-search API squarely targeted at software developers, researchers, and AI companies to embed search in their own applications. Because LINER does not offer an API, does not market to developers, and does not monetize via usage-based developer plans, it fails the direct-competition, customer-overlap, and business-model criteria.', 'confidence_score': 0.3, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'Public descriptions of LINER focus on a browser-based “LINER AI Search Engine” and “AI Writing Assistance” aimed at helping individual users highlight web pages, summarize search results, and draft content; no mention of a developer-facing or programmatic web-search API, no positioning toward researchers building their own AI systems, and no pricing or documentation for API usage.'}
+2025-06-26 13:30:59,506 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting LINER AI due to low confidence: 0.3
+2025-06-26 13:31:01,478 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:01,963 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:02,215 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:03,749 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:04,080 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:04,953 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:06,069 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:06,346 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:07,402 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:13,215 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:31:13,222 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Bing Search API: 0.0
+2025-06-26 13:31:13,222 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Bing Search API: {'name': 'Bing Search API', 'description': 'Bing Search API offers programmatic access to Microsoft Bing’s web search capabilities, including AI-augmented features and safety filters, primarily as part of Microsoft Azure Cognitive Services.', 'reasoning': 'The “Startup/Scale-up” criterion requires the competitor to be a smaller, independent company. Bing is a product of Microsoft, a major tech giant, and therefore fails criterion #1. Because it is automatically disqualified, the remaining criteria (sector match, direct competition, customer overlap, business model) are moot.', 'confidence_score': 0.0, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'Bing Search API is owned and operated by Microsoft, a Big Tech company explicitly listed for automatic disqualification.'}
+2025-06-26 13:31:13,223 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Bing Search API due to low confidence: 0.0
+2025-06-26 13:31:23,913 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:31:23,918 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Andi Search: 0.4
+2025-06-26 13:31:23,918 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Andi Search: {'name': 'Andi Search', 'description': 'Andi Search is a consumer-oriented, AI-powered search chatbot that delivers conversational answers and visual result feeds, focusing on privacy and an ad-free experience rather than providing an API or developer-centric search infrastructure.', 'reasoning': '', 'confidence_score': 0.4, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'The available information describes Andi as “an AI-powered search chatbot and a new type of search engine that uses generative AI and language models combined with live data to generate factually correct answers.”  All cited features (generative-AI answers, visual results, ad-free consumer search) are oriented toward end-user search experiences; no mention is made of an API, developer tooling, or enterprise research automation.'}
+2025-06-26 13:31:23,918 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Andi Search due to low confidence: 0.4
+2025-06-26 13:31:27,437 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:31:27,441 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Phind: 0.78
+2025-06-26 13:31:27,442 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Phind: {'name': 'Phind', 'description': '', 'reasoning': '', 'confidence_score': 0.78, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:31:27,442 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Phind with confidence: 0.78
+2025-06-26 13:31:30,002 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:30,190 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:30,552 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:32,986 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:33,016 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:33,042 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:35,416 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:35,782 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:36,039 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:51,537 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:31:51,545 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Qwant: 0.3
+2025-06-26 13:31:51,545 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Qwant: {'name': 'Qwant', 'description': '', 'reasoning': '', 'confidence_score': 0.3, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:31:51,547 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Qwant due to low confidence: 0.3
+2025-06-26 13:31:54,622 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:31:54,626 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Objective: 0.63
+2025-06-26 13:31:54,626 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Objective: {'name': 'Objective', 'description': '', 'reasoning': '', 'confidence_score': 0.63, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:31:54,627 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Objective with confidence: 0.63
+2025-06-26 13:31:55,324 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:31:55,334 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Neeva: 0.4
+2025-06-26 13:31:55,334 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Neeva: {'name': 'Neeva', 'description': 'Neeva provided an AI-powered, ad-free consumer search engine that generated summarized answers with citations; after Snowflake’s acquisition, its consumer search was shut down and its technology repurposed for enterprise data search inside Snowflake.', 'reasoning': '', 'confidence_score': 0.4, 'category': 'indirect', 'source': 'validated_analysis', 'evidence': 'Neeva’s product was an ad-free, subscription-based consumer search engine that used generative-AI to create on-page summaries and cite sources.  There is no indication that Neeva offered a public search API, SDK, or developer tooling comparable to Tavily’s “AI-powered search API for developers and researchers.”  Neeva’s target audience was end-users willing to pay for a privacy-preserving search experience, not software teams building AI products.  Moreover, the company shut down its consumer search service in mid-2023 after being acquired by Snowflake, further distancing it from Tavily’s developer-centric market.'}
+2025-06-26 13:31:55,334 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Neeva due to low confidence: 0.4
+2025-06-26 13:31:57,394 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:57,430 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:58,196 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:59,415 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:31:59,779 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:00,830 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:01,394 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:01,798 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:07,139 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:19,420 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:19,424 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Perplexity AI: 0.78
+2025-06-26 13:32:19,424 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Perplexity AI: {'name': 'Perplexity AI', 'description': '', 'reasoning': '', 'confidence_score': 0.78, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:32:19,426 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Perplexity AI with confidence: 0.78
+2025-06-26 13:32:22,101 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:22,101 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Perplexity: 0.8
+2025-06-26 13:32:22,101 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Perplexity: {'name': 'Perplexity', 'description': '', 'reasoning': '', 'confidence_score': 0.8, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:32:22,101 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Perplexity with confidence: 0.8
+2025-06-26 13:32:22,210 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:22,213 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for deepset: 0.73
+2025-06-26 13:32:22,214 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for deepset: {'name': 'deepset', 'description': '', 'reasoning': '', 'confidence_score': 0.73, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:32:22,214 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting deepset with confidence: 0.73
+2025-06-26 13:32:24,420 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:24,929 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:24,959 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:26,016 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:27,696 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:28,139 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:28,231 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:30,457 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:31,665 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:41,331 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:41,348 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Exa: 0.85
+2025-06-26 13:32:41,348 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Exa: {'name': 'Exa', 'description': '', 'reasoning': '', 'confidence_score': 0.85, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:32:41,348 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Exa with confidence: 0.85
+2025-06-26 13:32:43,013 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:43,017 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Brave Search: 0.8
+2025-06-26 13:32:43,018 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Brave Search: {'name': 'Brave Search', 'description': '', 'reasoning': '', 'confidence_score': 0.8, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:32:43,018 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Brave Search with confidence: 0.8
+2025-06-26 13:32:46,114 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:46,120 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Typesense: 0.6
+2025-06-26 13:32:46,122 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Typesense: {'name': 'Typesense', 'description': '', 'reasoning': '', 'confidence_score': 0.6, 'category': 'indirect', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:32:46,124 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Typesense with confidence: 0.6
+2025-06-26 13:32:48,431 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:48,819 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:50,251 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:50,384 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:51,484 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:52,572 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:52,906 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:54,465 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:55,597 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:32:56,833 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:32:56,836 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Azure AI Search: 0.0
+2025-06-26 13:32:56,838 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Azure AI Search: {'name': 'Azure AI Search', 'description': 'Azure AI Search is Microsoft’s managed “search-as-a-service” platform that adds AI-powered indexing, vector search, and cognitive skills to applications, primarily targeting enterprise developers building search experiences on Azure.', 'reasoning': 'Because Azure AI Search is owned and operated by Microsoft (a major tech giant) it fails the very first requirement for being considered a startup/scale-up competitor. Regardless of sector overlap, the product is automatically disqualified.', 'confidence_score': 0.0, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'Azure AI Search is a cloud service offered by Microsoft Azure—a business unit of Microsoft, which is explicitly listed under “Big Tech” in the Instant Disqualification rules.'}
+2025-06-26 13:32:56,839 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Azure AI Search due to low confidence: 0.0
+2025-06-26 13:33:01,671 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:01,673 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for AWS Kendra: 0.0
+2025-06-26 13:33:01,673 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for AWS Kendra: {'name': 'AWS Kendra', 'description': 'AWS Kendra is a fully managed, AI-enabled enterprise search service within the Amazon Web Services cloud platform, designed to index and search large document repositories (e.g., S3, SharePoint, file systems) using natural-language queries.', 'reasoning': 'Although AWS Kendra provides AI-powered search capabilities that overlap functionally with Tavily, it is owned and operated by Amazon—a Big Tech company. The competition framework instantly disqualifies big-tech offerings from being considered legitimate startup/scale-up competitors. Therefore, AWS Kendra cannot be evaluated as a startup peer to Tavily.', 'confidence_score': 0.0, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'AWS Kendra is an Amazon Web Services (AWS) product. Amazon is explicitly listed under “Big Tech” in the Instant Disqualification rules.'}
+2025-06-26 13:33:01,673 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting AWS Kendra due to low confidence: 0.0
+2025-06-26 13:33:04,659 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:04,661 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for LegitQuest: 0.3
+2025-06-26 13:33:04,662 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for LegitQuest: {'name': 'LegitQuest', 'description': 'LegitQuest provides an AI-powered legal research platform that allows lawyers to search Indian case-law databases using NLP and deep learning.', 'reasoning': '', 'confidence_score': 0.3, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'LegitQuest is positioned as a legal-tech research portal that “simplifies legal research… to browse millions of case-law records” for lawyers and legal professionals. Public descriptions mention AI/NLP-based search inside its own legal database, but there is no indication of an open web-scale search API, developer SDK, or tooling aimed at external software builders or generic researchers. Its customers are lawyers and law firms, not the developer/AI-company audience Tavily serves.'}
+2025-06-26 13:33:04,662 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting LegitQuest due to low confidence: 0.3
+2025-06-26 13:33:07,616 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:07,648 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:07,702 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:10,412 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:10,493 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:10,754 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:12,748 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:13,021 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:13,300 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:23,389 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:23,393 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Twiggle: 0.3
+2025-06-26 13:33:23,393 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Twiggle: {'name': 'Twiggle', 'description': 'Twiggle delivers an AI-powered search-enhancement API for online retailers, using a product ontology and NLP to improve e-commerce product discovery and merchandising analytics.', 'reasoning': '', 'confidence_score': 0.3, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'Twiggle’s public material positions it as “an AI-based e-commerce search platform” that “integrates with existing product-search engines so retailers can improve on-site product discovery, catalog enrichment, and merchandising decisions.” Its customers are online retailers and e-commerce teams; the API enriches product data and optimizes shopper search queries. There is no mention of real-time web crawling or a generalized search API for developers/researchers, which are Tavily’s core offerings.'}
+2025-06-26 13:33:23,393 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Twiggle due to low confidence: 0.3
+2025-06-26 13:33:24,355 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:24,361 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Komo Search: 0.55
+2025-06-26 13:33:24,362 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Komo Search: {'name': 'Komo Search', 'description': 'Komo Search is a privacy-centric, ad-free AI search engine that sells subscription plans to individual users, offering AI-driven query answering and research tools, but it does not currently provide a developer API comparable to Tavily’s core offering.', 'reasoning': '', 'confidence_score': 0.55, 'category': 'indirect', 'source': 'validated_analysis', 'evidence': 'Komo Search positions itself as an “AI-powered, private, ad-free search engine” and sells user-facing subscription tiers (Basic, Premium, Business) that bundle AI research and exploration tools. Public information does not mention a developer-facing web-search API or programmatic access; its core pitch is an end-user search experience rather than an embeddable service.'}
+2025-06-26 13:33:24,363 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Komo Search due to low confidence: 0.55
+2025-06-26 13:33:34,838 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:34,856 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Consensus: 0.6
+2025-06-26 13:33:34,856 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Consensus: {'name': 'Consensus', 'description': 'Consensus.ai (Consensus.app) offers an AI-powered search engine that semantically queries academic papers and generates concise, evidence-based answers, helping researchers, students, and knowledge workers locate and digest scientific information faster.', 'reasoning': '', 'confidence_score': 0.6, 'category': 'indirect', 'source': 'validated_analysis', 'evidence': 'Consensus.app is a venture-funded startup that uses large-language-model technology to search and synthesize findings from millions of peer-reviewed research papers. It markets itself as an “AI-powered search engine for scientific literature,” sells individual and team subscriptions to researchers and students, and positions its product as an AI research assistant that returns evidence-based answers extracted directly from source papers—functionality that overlaps Tavily’s “research assistant/AI search engine” use case. However, Consensus does not (today) emphasize a public Search API for developers, nor does it cover the full, real-time web; its go-to-market is primarily end-user SaaS, not developer tooling.'}
+2025-06-26 13:33:34,856 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Consensus with confidence: 0.6
+2025-06-26 13:33:37,624 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:37,889 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:38,590 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:40,391 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:40,501 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:41,321 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:43,040 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:43,072 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:46,539 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:33:56,620 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:56,623 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Hacker Search: 0.25
+2025-06-26 13:33:56,623 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Hacker Search: {'name': 'Hacker Search', 'description': 'Hacker Search is a subscription-based cybersecurity search engine that catalogs publicly exposed systems and vulnerabilities so security professionals can locate and analyze at-risk assets; it is not designed as an AI-powered web-search API for general information retrieval or LLM integration.', 'reasoning': '', 'confidence_score': 0.25, 'category': 'not_relevant', 'source': 'validated_analysis', 'evidence': 'Available descriptions show Hacker Search indexes technical exposure data (e.g., vulnerable devices, applications) for security researchers; no mention of an AI-driven, general-purpose web-search API or tooling for LLM/RAG workflows comparable to Tavily’s offering.'}
+2025-06-26 13:33:56,629 - backend.agents.enhanced_competitor_discovery_agent - INFO - Rejecting Hacker Search due to low confidence: 0.25
+2025-06-26 13:33:56,645 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:33:56,649 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for SerpApi: 0.75
+2025-06-26 13:33:56,650 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for SerpApi: {'name': 'SerpApi', 'description': '', 'reasoning': '', 'confidence_score': 0.75, 'category': 'direct', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:33:56,651 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting SerpApi with confidence: 0.75
+2025-06-26 13:34:00,300 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:34:00,307 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for SWIRL: 0.6
+2025-06-26 13:34:00,307 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for SWIRL: {'name': 'SWIRL', 'description': '', 'reasoning': '', 'confidence_score': 0.6, 'category': 'indirect', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:34:00,307 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting SWIRL with confidence: 0.6
+2025-06-26 13:34:02,100 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:34:02,991 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:34:04,177 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:34:05,699 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:34:05,849 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:34:15,422 - httpx - INFO - HTTP Request: POST https://api.tavily.com/search "HTTP/1.1 200 OK"
+2025-06-26 13:34:20,878 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:34:20,880 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Meilisearch: 0.6
+2025-06-26 13:34:20,880 - backend.agents.enhanced_competitor_discovery_agent - INFO - Final analysis result for Meilisearch: {'name': 'Meilisearch', 'description': '', 'reasoning': '', 'confidence_score': 0.6, 'category': 'indirect', 'source': 'validated_analysis', 'evidence': ''}
+2025-06-26 13:34:20,880 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Meilisearch with confidence: 0.6
+2025-06-26 13:34:27,827 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:34:27,827 - backend.agents.enhanced_competitor_discovery_agent - INFO - Parsed confidence for Algolia: 0.65
+2025-06-26 13:34:27,837 - backend.agents.enhanced_competitor_discovery_agent - INFO - Accepting Algolia with confidence: 0.65
+2025-06-26 13:34:27,837 - backend.agents.enhanced_competitor_discovery_agent - INFO - Validated 13 competitors
+2025-06-26 13:34:42,159 - httpx - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2025-06-26 13:34:42,172 - __main__ - INFO - Total competitors found: 13
+2025-06-26 13:34:42,173 - __main__ - INFO - Search queries used: 20
+2025-06-26 13:34:42,178 - __main__ - INFO -   1. {'query': 'AI-powered web search API startup alternatives', 'type': 'startup_directory', 'context': 'Broad keyword combo surfaces startup directory and listicles that catalog niche AI search API providers directly comparable to Tavily.'}
+2025-06-26 13:34:42,179 - __main__ - INFO -   2. {'query': 'AI search engine API for developers ProductHunt', 'type': 'startup_directory', 'context': 'ProductHunt searches reveal recently launched AI search engines & APIs aimed at developers—ideal peer set for Tavily.'}
+2025-06-26 13:34:42,179 - __main__ - INFO -   3. {'query': 'real-time web search API startups site:crunchbase.com', 'type': 'startup_directory', 'context': 'Crunchbase-specific query homes in on startups offering real-time web search APIs, filtering out large incumbents.'}
+2025-06-26 13:34:42,181 - __main__ - INFO -   4. {'query': 'semantic search API startup funding round 2023', 'type': 'tech_blog_roundup', 'context': 'Funding-coverage articles often list multiple players funded in the same space, exposing emerging competitors.'}
+2025-06-26 13:34:42,181 - __main__ - INFO -   5. {'query': 'alternatives to Perplexity AI search API', 'type': 'alternative_search', 'context': 'Perplexity offers an AI search API; “alternatives” queries usually return competitor lists that will include Tavily-like companies.'}
+2025-06-26 13:34:42,181 - __main__ - INFO -   6. {'query': 'Metaphor Systems competitors AI search', 'type': 'competitor_comparison', 'context': 'Metaphor is an AI search startup; competitor-centric phrasing uncovers other specialized AI search engines.'}
+2025-06-26 13:34:42,181 - __main__ - INFO -   7. {'query': "AI search startup comparison 'You.com' vs", 'type': 'product_comparison', 'context': 'For articles comparing You.com with other AI search startups, which identifies peers directly competing on AI search functionality.'}
+2025-06-26 13:34:42,181 - __main__ - INFO -   8. {'query': 'Hacker News discussion semantic search API', 'type': 'developer_discussion', 'context': 'HN threads often crowdsource the best developer-friendly AI/semantic search APIs, spotlighting early-stage competitors.'}
+2025-06-26 13:34:42,183 - __main__ - INFO -   9. {'query': 'Reddit r/MachineLearning best AI search APIs 2024', 'type': 'developer_discussion', 'context': 'Reddit threads asking for the “best AI search APIs” typically list cutting-edge startups that match Tavily’s positioning.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   10. {'query': 'list of AI search engines for research automation', 'type': 'tech_blog_roundup', 'context': 'Blog roundups targeting research automation use cases surface niche AI search tools catering to researchers—the same segment Tavily serves.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   11. {'query': 'search API with large language model enrichment startup', 'type': 'API_comparison', 'context': 'Combines technical differentiator (LLM enrichment) with “startup” to isolate companies delivering AI-enhanced search APIs.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   12. {'query': 'semantic search SaaS startups 2024 landscape', 'type': 'market_landscape', 'context': 'Landscape pieces map the competitive field of semantic/AI search SaaS, short-listing direct competitors.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   13. {'query': "AI search SDK competitors 'contextual web search'", 'type': 'product_comparison', 'context': 'Targets SDK/API angle (“contextual web search”) to pull in startups engineering similar developer-facing products.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   14. {'query': 'site:substack.com AI search engine startup roundup', 'type': 'tech_blog_roundup', 'context': 'Tech journalists on Substack often publish curated lists of emerging AI search engines, revealing under-the-radar competitors.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   15. {'query': 'Graph neural network search engine startup', 'type': 'niche_tech_search', 'context': 'Uses a specific technical method (GNN) to locate AI search startups leveraging advanced models for richer relevance, aligning with Tavily’s AI edge.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   16. {'query': "'search as a service' AI startup list", 'type': 'service_category_search', 'context': '“Search as a Service” is a synonym market label; querying startup lists here yields competitors offering hosted search APIs.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   17. {'query': 'Crunchbase list semantic web search startups NOT Google', 'type': 'startup_directory', 'context': 'Adds “NOT Google” exclusion to suppress big-tech noise while pulling Crunchbase lists of semantic web search startups.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   18. {'query': 'AI research assistant browser extension competitors', 'type': 'product_comparison', 'context': 'Some AI search startups package their tech as research-assistant extensions; searching for competitors in this form finds parallel players.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   19. {'query': "API marketplace 'AI search' category startups", 'type': 'API_marketplace_search', 'context': 'API marketplaces (RapidAPI, etc.) categorize APIs; searching their AI search sections uncovers specialized API-first companies.'}
+2025-06-26 13:34:42,184 - __main__ - INFO -   20. {'query': "VC blog 'who is building the next gen search engine' startups", 'type': 'investor_insight', 'context': 'VC thought-leadership pieces list promising new AI search startups, reflecting who investors see as direct competitors to Tavily.'}
+2025-06-26 13:34:42,184 - __main__ - INFO - 
+ANALYZING TAVILY RESULTS:
+2025-06-26 13:34:42,184 - __main__ - INFO - Discovered names: ['Exa', 'Perplexity', 'Brave Search', 'Phind', 'Perplexity AI', 'SerpApi', 'deepset', 'Algolia', 'Objective', 'Typesense', 'Consensus', 'SWIRL', 'Meilisearch']
+2025-06-26 13:34:42,188 - __main__ - INFO -   Accuracy Score: 0.38/1.0
+2025-06-26 13:34:42,188 - __main__ - INFO -   Good Competitors Found: ['Perplexity', 'Exa', 'Phind'] (3/8)
+2025-06-26 13:34:42,188 - __main__ - INFO -   Bad Competitors Found: [] (0 penalties)
+2025-06-26 13:34:42,188 - __main__ - INFO -   Total Discovered: 13
+2025-06-26 13:34:42,188 - __main__ - INFO -   Issues: []
+2025-06-26 13:34:42,196 - __main__ - INFO -      Confidence: 0.85, Category: direct
+2025-06-26 13:34:42,196 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,199 - __main__ - INFO -      Confidence: 0.80, Category: direct
+2025-06-26 13:34:42,199 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,201 - __main__ - INFO -      Confidence: 0.80, Category: direct
+2025-06-26 13:34:42,201 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,201 - __main__ - INFO -      Confidence: 0.78, Category: direct
+2025-06-26 13:34:42,201 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,208 - __main__ - INFO -      Confidence: 0.78, Category: direct
+2025-06-26 13:34:42,208 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,211 - __main__ - INFO -      Confidence: 0.75, Category: direct
+2025-06-26 13:34:42,211 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,212 - __main__ - INFO -      Confidence: 0.73, Category: direct
+2025-06-26 13:34:42,212 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,212 - __main__ - INFO -      Confidence: 0.65, Category: indirect
+2025-06-26 13:34:42,212 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,218 - __main__ - INFO -      Confidence: 0.63, Category: direct
+2025-06-26 13:34:42,218 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,220 - __main__ - INFO -      Confidence: 0.60, Category: indirect
+2025-06-26 13:34:42,220 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,221 - __main__ - INFO -      Confidence: 0.60, Category: indirect
+2025-06-26 13:34:42,221 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,225 - __main__ - INFO -      Confidence: 0.60, Category: indirect
+2025-06-26 13:34:42,225 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,228 - __main__ - INFO -      Confidence: 0.60, Category: indirect
+2025-06-26 13:34:42,228 - __main__ - INFO -      Reasoning: ...
+2025-06-26 13:34:42,236 - __main__ - INFO -    Accuracy Score: 37.5%
+2025-06-26 13:34:42,236 - __main__ - INFO -    Good Competitors: 3/8
+2025-06-26 13:34:42,236 - __main__ - INFO -    Bad Competitors: 0 (should be 0)

@@ -1,0 +1,201 @@
+{
+  "discovered": [
+    {
+      "name": "Bing",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.9,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Metaphor",
+      "description": "Metaphor Systems delivers an AI-driven semantic search engine/API that lets users and developers query the web in natural language and receive contextually relevant URLs and cleaned HTML content\u2014functionality that directly substitutes for Tavily\u2019s AI search and research-assistant offerings.",
+      "reasoning": "",
+      "confidence_score": 0.88,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Exa",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.87,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Perplexity AI",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.75,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Phind",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.68,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "OpenAI",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.65,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Komo",
+      "description": "Komo AI offers a privacy-focused, ad-free, generative-AI search engine with chat, multilingual support, summarization, and live news, aimed at individual users and knowledge workers seeking faster research and exploration, but it does not currently provide an API or developer-centric service like Tavily.",
+      "reasoning": "",
+      "confidence_score": 0.62,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": "Komo AI is described as \u201can advanced AI-powered search engine\u2026[that] caters to research, business-intelligence, and concept exploration,\u201d offering \u201cchat interaction, content summarization, real-time news updates, and concept exploration.\u201d Like Tavily, it delivers AI-enhanced web-search results geared toward research workflows. However, the material never references an API or developer-focused product; Komo is framed as a consumer/knowledge-worker search engine."
+    },
+    {
+      "name": "Brave",
+      "description": "Brave Search is a privacy-centric, AI-powered consumer search engine (and browser integration) that delivers summarized answers without tracking users, overlapping with Tavily on AI search technology but diverging on target customers and delivery model.",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": "The content states that \u201cBrave Search is an AI-based search engine delivering fast, AI-powered answers,\u201d positioning it inside the AI-search sector that Tavily occupies. Both firms supply AI-generated summaries/answers in real time, so they solve a similar core problem (AI-powered web search). However, the supplied information for Brave mentions only an end-user search engine and privacy-focused browser integration, with no explicit reference to a developer-facing Search API or research-automation tooling\u2014Tavily\u2019s main product line."
+    },
+    {
+      "name": "Andi",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Meilisearch",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    }
+  ],
+  "analysis": {
+    "accuracy_score": 0.425,
+    "good_found": [
+      "Perplexity",
+      "Exa",
+      "Metaphor",
+      "Bing Chat",
+      "Phind"
+    ],
+    "bad_found": [
+      "Meta"
+    ],
+    "total_discovered": 10,
+    "expected_good": 8,
+    "issues": [
+      "big_tech_contamination"
+    ],
+    "discovered_names": [
+      "Bing",
+      "Metaphor",
+      "Exa",
+      "Perplexity AI",
+      "Phind",
+      "OpenAI",
+      "Komo",
+      "Brave",
+      "Andi",
+      "Meilisearch"
+    ]
+  },
+  "queries": [
+    {
+      "query": "Perplexity API competitors 2024",
+      "type": "ai_search_comparison",
+      "context": "Perplexity provides an AI search API; sites listing its competitors will almost certainly surface Tavily peers."
+    },
+    {
+      "query": "best AI search APIs for developers 2024",
+      "type": "niche_market_list",
+      "context": "\u201cBest \u2026 for developers\u201d attracts tech-blog roundups and comparison posts focused on exactly the developer-oriented API niche Tavily serves."
+    },
+    {
+      "query": "Exa vs Metaphor search engine comparison",
+      "type": "direct_comparison",
+      "context": "Draws content comparing two emerging AI search engines; the same sources often list additional players in the space."
+    },
+    {
+      "query": "AI search startups ProductHunt",
+      "type": "startup_directory",
+      "context": "ProductHunt collections and launch pages for AI search startups highlight emerging competitors before they hit mainstream press."
+    },
+    {
+      "query": "semantic search API startups Crunchbase",
+      "type": "startup_directory",
+      "context": "Crunchbase queries filtered by \u201csemantic search API\u201d reveal venture-backed companies targeting the same technical problem set."
+    },
+    {
+      "query": "reddit recommendations intelligent search API",
+      "type": "user_forum",
+      "context": "Reddit power users discuss and compare niche APIs; this phrasing pulls threads full of real-world competitor mentions."
+    },
+    {
+      "query": "Hacker News discussion 'search API' alternatives",
+      "type": "user_forum",
+      "context": "HN comment threads often list up-and-coming developer tools that compete directly with Tavily."
+    },
+    {
+      "query": "top real-time web indexing platforms 2024 comparison",
+      "type": "tech_blog_review",
+      "context": "Tech blogs compiling \u201ctop\u201d platforms for real-time web indexing invariably include AI search APIs and adjacent competitors."
+    },
+    {
+      "query": "Metaphor Search alternative tools review",
+      "type": "alternative_to",
+      "context": "Sites reviewing Metaphor alternatives will overlap heavily with Tavily\u2019s competitive set."
+    },
+    {
+      "query": "AI research automation tools comparison blog",
+      "type": "tech_blog_review",
+      "context": "AI research automation is a core use-case; comparison blogs here list specialized competitors beyond generic search engines."
+    },
+    {
+      "query": "vector search vs AI web search solutions",
+      "type": "niche_market_comparison",
+      "context": "Content contrasting vector search with AI web search surfaces companies straddling both approaches (e.g., You.com API, Exa, Tavily)."
+    },
+    {
+      "query": "best developer-friendly web search APIs not Google",
+      "type": "alternatives_to_bigtech",
+      "context": "Explicitly excludes big tech, ensuring results emphasize smaller, specialized API providers competing with Tavily."
+    },
+    {
+      "query": "real-time knowledge graph API competitors",
+      "type": "niche_market_list",
+      "context": "Many AI search APIs market themselves as knowledge-graph builders; lists here will reveal adjacent competitive offerings."
+    },
+    {
+      "query": "AI data retrieval startups seed funding 2023-2024",
+      "type": "startup_funding_scan",
+      "context": "Funding news aggregates (TechCrunch, Crunchbase) group early-stage startups building AI retrieval/search tech, highlighting new entrants."
+    },
+    {
+      "query": "compare AI meta-search engines for applications",
+      "type": "tech_blog_review",
+      "context": "\u201cMeta-search engines for applications\u201d is a fine-grained label likely to catch specialized reviews detailing multiple Tavily-like players."
+    }
+  ]
+}

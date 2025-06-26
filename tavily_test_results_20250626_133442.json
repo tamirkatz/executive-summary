@@ -1,0 +1,250 @@
+{
+  "discovered": [
+    {
+      "name": "Exa",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.85,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Perplexity",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.8,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Brave Search",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.8,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Phind",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.78,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Perplexity AI",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.78,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "SerpApi",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.75,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "deepset",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.73,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Algolia",
+      "description": "Algolia delivers a hosted, developer-first AI search platform (NeuralSearch) that combines vector, keyword, and semantic ranking to power in-app, site, and e-commerce discovery, offered via REST/GraphQL APIs and SDKs.",
+      "reasoning": "",
+      "confidence_score": 0.65,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": "Algolia markets itself as a \u201cSearch-as-a-Service\u201d platform for developers, offering a hosted search API, AI/ML-driven ranking (NeuralSearch, vector search, hybrid search), and relevance-tuning tools. Its documentation and pricing pages explicitly target software engineers and AI teams that need to embed search in their apps or sites. Algolia positions its \u201cAI Search\u201d and \u201cRecommend\u201d products as developer APIs and recently launched NeuralSearch for semantic, generative\u2010AI-enhanced search\u2014placing it in the AI Search segment."
+    },
+    {
+      "name": "Objective",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.63,
+      "category": "direct",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Typesense",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Consensus",
+      "description": "Consensus.ai (Consensus.app) offers an AI-powered search engine that semantically queries academic papers and generates concise, evidence-based answers, helping researchers, students, and knowledge workers locate and digest scientific information faster.",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": "Consensus.app is a venture-funded startup that uses large-language-model technology to search and synthesize findings from millions of peer-reviewed research papers. It markets itself as an \u201cAI-powered search engine for scientific literature,\u201d sells individual and team subscriptions to researchers and students, and positions its product as an AI research assistant that returns evidence-based answers extracted directly from source papers\u2014functionality that overlaps Tavily\u2019s \u201cresearch assistant/AI search engine\u201d use case. However, Consensus does not (today) emphasize a public Search API for developers, nor does it cover the full, real-time web; its go-to-market is primarily end-user SaaS, not developer tooling."
+    },
+    {
+      "name": "SWIRL",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    },
+    {
+      "name": "Meilisearch",
+      "description": "",
+      "reasoning": "",
+      "confidence_score": 0.6,
+      "category": "indirect",
+      "source": "validated_analysis",
+      "evidence": ""
+    }
+  ],
+  "analysis": {
+    "accuracy_score": 0.375,
+    "good_found": [
+      "Perplexity",
+      "Exa",
+      "Phind"
+    ],
+    "bad_found": [],
+    "total_discovered": 13,
+    "expected_good": 8,
+    "issues": [],
+    "discovered_names": [
+      "Exa",
+      "Perplexity",
+      "Brave Search",
+      "Phind",
+      "Perplexity AI",
+      "SerpApi",
+      "deepset",
+      "Algolia",
+      "Objective",
+      "Typesense",
+      "Consensus",
+      "SWIRL",
+      "Meilisearch"
+    ]
+  },
+  "queries": [
+    {
+      "query": "AI-powered web search API startup alternatives",
+      "type": "startup_directory",
+      "context": "Broad keyword combo surfaces startup directory and listicles that catalog niche AI search API providers directly comparable to Tavily."
+    },
+    {
+      "query": "AI search engine API for developers ProductHunt",
+      "type": "startup_directory",
+      "context": "ProductHunt searches reveal recently launched AI search engines & APIs aimed at developers\u2014ideal peer set for Tavily."
+    },
+    {
+      "query": "real-time web search API startups site:crunchbase.com",
+      "type": "startup_directory",
+      "context": "Crunchbase-specific query homes in on startups offering real-time web search APIs, filtering out large incumbents."
+    },
+    {
+      "query": "semantic search API startup funding round 2023",
+      "type": "tech_blog_roundup",
+      "context": "Funding-coverage articles often list multiple players funded in the same space, exposing emerging competitors."
+    },
+    {
+      "query": "alternatives to Perplexity AI search API",
+      "type": "alternative_search",
+      "context": "Perplexity offers an AI search API; \u201calternatives\u201d queries usually return competitor lists that will include Tavily-like companies."
+    },
+    {
+      "query": "Metaphor Systems competitors AI search",
+      "type": "competitor_comparison",
+      "context": "Metaphor is an AI search startup; competitor-centric phrasing uncovers other specialized AI search engines."
+    },
+    {
+      "query": "AI search startup comparison 'You.com' vs",
+      "type": "product_comparison",
+      "context": "For articles comparing You.com with other AI search startups, which identifies peers directly competing on AI search functionality."
+    },
+    {
+      "query": "Hacker News discussion semantic search API",
+      "type": "developer_discussion",
+      "context": "HN threads often crowdsource the best developer-friendly AI/semantic search APIs, spotlighting early-stage competitors."
+    },
+    {
+      "query": "Reddit r/MachineLearning best AI search APIs 2024",
+      "type": "developer_discussion",
+      "context": "Reddit threads asking for the \u201cbest AI search APIs\u201d typically list cutting-edge startups that match Tavily\u2019s positioning."
+    },
+    {
+      "query": "list of AI search engines for research automation",
+      "type": "tech_blog_roundup",
+      "context": "Blog roundups targeting research automation use cases surface niche AI search tools catering to researchers\u2014the same segment Tavily serves."
+    },
+    {
+      "query": "search API with large language model enrichment startup",
+      "type": "API_comparison",
+      "context": "Combines technical differentiator (LLM enrichment) with \u201cstartup\u201d to isolate companies delivering AI-enhanced search APIs."
+    },
+    {
+      "query": "semantic search SaaS startups 2024 landscape",
+      "type": "market_landscape",
+      "context": "Landscape pieces map the competitive field of semantic/AI search SaaS, short-listing direct competitors."
+    },
+    {
+      "query": "AI search SDK competitors 'contextual web search'",
+      "type": "product_comparison",
+      "context": "Targets SDK/API angle (\u201ccontextual web search\u201d) to pull in startups engineering similar developer-facing products."
+    },
+    {
+      "query": "site:substack.com AI search engine startup roundup",
+      "type": "tech_blog_roundup",
+      "context": "Tech journalists on Substack often publish curated lists of emerging AI search engines, revealing under-the-radar competitors."
+    },
+    {
+      "query": "Graph neural network search engine startup",
+      "type": "niche_tech_search",
+      "context": "Uses a specific technical method (GNN) to locate AI search startups leveraging advanced models for richer relevance, aligning with Tavily\u2019s AI edge."
+    },
+    {
+      "query": "'search as a service' AI startup list",
+      "type": "service_category_search",
+      "context": "\u201cSearch as a Service\u201d is a synonym market label; querying startup lists here yields competitors offering hosted search APIs."
+    },
+    {
+      "query": "Crunchbase list semantic web search startups NOT Google",
+      "type": "startup_directory",
+      "context": "Adds \u201cNOT Google\u201d exclusion to suppress big-tech noise while pulling Crunchbase lists of semantic web search startups."
+    },
+    {
+      "query": "AI research assistant browser extension competitors",
+      "type": "product_comparison",
+      "context": "Some AI search startups package their tech as research-assistant extensions; searching for competitors in this form finds parallel players."
+    },
+    {
+      "query": "API marketplace 'AI search' category startups",
+      "type": "API_marketplace_search",
+      "context": "API marketplaces (RapidAPI, etc.) categorize APIs; searching their AI search sections uncovers specialized API-first companies."
+    },
+    {
+      "query": "VC blog 'who is building the next gen search engine' startups",
+      "type": "investor_insight",
+      "context": "VC thought-leadership pieces list promising new AI search startups, reflecting who investors see as direct competitors to Tavily."
+    }
+  ]
+}

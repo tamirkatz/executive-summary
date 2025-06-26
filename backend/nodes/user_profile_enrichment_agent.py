@@ -7,7 +7,6 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from backend.config import config
 from tavily import AsyncTavilyClient
-from .competitor_discovery_agent import FocusedCompetitorDiscoveryAgent
 from ..classes import InputState, ResearchState
 from ..agents.base_agent import BaseAgent
 
@@ -20,10 +19,12 @@ class EnrichedProfile(BaseModel):
     description: str = Field(description="A brief description of what the company does")
     industry: str = Field(description="The primary industry sector")
     sector: str = Field(description="The primary sector of the company")
-    clients_industries: List[str] = Field(description="The main industries of the clients of the company")
-    competitors: List[str] = Field(description="List of main competitors", max_items=10)
+    customer_segments: List[str] = Field(description="List of customer segments of the company", max_items=10)
     known_clients: List[str] = Field(description="List of notable clients or customers", max_items=10)
     partners: List[str] = Field(description="List of partners of the company", max_items=10)
+    use_cases: List[str] = Field(description="List of use cases for the company's products or services", max_items=10)
+    core_products: List[str] = Field(description="List of core products or services of the company", max_items=10)
+    synonyms: List[str] = Field(description="List of synonyms and jargons the company's products or services are known by", max_items=10)
 
 
 class UserProfileEnrichmentAgent(BaseAgent):
@@ -37,8 +38,6 @@ class UserProfileEnrichmentAgent(BaseAgent):
 
         self.tavily = AsyncTavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
         
-        # Initialize the focused competitor discovery agent
-        self.competitor_agent = FocusedCompetitorDiscoveryAgent(model_name)
 
         self.examples = [
             {
@@ -47,10 +46,12 @@ class UserProfileEnrichmentAgent(BaseAgent):
                 "description": "Stripe is a technology company that builds economic infrastructure for the internet. Businesses of every size—from new startups to Fortune 500s—use our software to accept payments and grow their revenue globally.",
                 "industry": "Financial Technology",
                 "sector": "Payments",
-                "clients_industries": ["E-commerce", "SaaS", "Marketplaces", "Subscription Services"],
-                "competitors": ["PayPal", "Square", "Adyen", "Braintree", "Checkout.com"],
+                "customer_segments": ["E-commerce", "SaaS", "Marketplaces", "Subscription Services"],
                 "known_clients": ["Amazon", "Google", "Uber", "Shopify", "Spotify"],
-                "partners": ["Shopify", "WooCommerce", "Salesforce", "Microsoft"]
+                "partners": ["Shopify", "WooCommerce", "Salesforce", "Microsoft"],
+                "use_cases": ["Payment Processing", "Subscription Management", "E-commerce", "Marketplaces"],
+                "core_products": ["Stripe API", "Stripe Checkout", "Stripe Connect", "Stripe Issuing"],
+                "synonyms": ["Payment Processing", "Subscription Management", "E-commerce", "Marketplaces"]
             },
             {
                 "company": "OpenAI",
@@ -58,10 +59,12 @@ class UserProfileEnrichmentAgent(BaseAgent):
                 "description": "OpenAI is an AI research and deployment company. Our mission is to ensure that artificial general intelligence benefits all of humanity.",
                 "industry": "Artificial Intelligence",
                 "sector": "Machine Learning",
-                "clients_industries": ["Technology", "Healthcare", "Finance", "Education", "Entertainment"],
-                "competitors": ["Anthropic", "Google DeepMind", "Microsoft", "Meta AI", "Cohere"],
+                "customer_segments": ["Technology", "Healthcare", "Finance", "Education", "Entertainment"],
                 "known_clients": ["Microsoft", "GitHub", "Shopify", "Snapchat", "Duolingo"],
-                "partners": ["Microsoft", "GitHub", "Salesforce", "Shopify"]
+                "partners": ["Microsoft", "GitHub", "Salesforce", "Shopify"],
+                "use_cases": ["AI Research", "AI Deployment", "AI Training", "AI Inference"],
+                "core_products": ["OpenAI API", "OpenAI Models", "OpenAI Fine-tuning", "OpenAI Embeddings"],
+                "synonyms": ["AI Research", "AI Deployment", "AI Training", "AI Inference"]
             },
             {
                 "company": "Algolia",
@@ -69,10 +72,25 @@ class UserProfileEnrichmentAgent(BaseAgent):
                 "description": "Algolia is a search-as-a-service platform that provides APIs for building fast, relevant search experiences in applications and websites.",
                 "industry": "Search Technology",
                 "sector": "API Services",
-                "clients_industries": ["E-commerce", "SaaS", "Media", "Enterprise Software"],
-                "competitors": ["Elasticsearch", "Swiftype", "Amazon CloudSearch", "Google Site Search"],
+                "customer_segments": ["E-commerce", "SaaS", "Media", "Enterprise Software"],
                 "known_clients": ["Medium", "Stripe", "Twitch", "Periscope", "Product Hunt"],
-                "partners": ["Shopify", "Magento", "WordPress", "Netlify"]
+                "partners": ["Shopify", "Magento", "WordPress", "Netlify"],
+                "use_cases": ["Search Experience", "Search Optimization", "Search Personalization", "Search Analytics"],
+                "core_products": ["Algolia API", "Algolia InstantSearch", "Algolia Search API", "Algolia Search SDK"],
+                "synonyms": ["Search Experience", "Search Optimization", "Search Personalization", "Search Analytics"]
+            },
+            {
+              "company":"Tavily",
+              "role":"CEO",
+              "description":"Tavily is a search engine, designed for AI agents.",
+              "industry":"AI agents search",
+              "sector":"Search Engine",
+              "customer_segments":["B2B saas"],
+              "known_clients":["AI companies", "Research teams"],
+              "partners":["IBM","Nvidia","Langchain"],
+              "use_cases":["AI agents search"],
+              "core_products":["Tavily API", "Tavily Search API", "Tavily Search SDK", "Tavily Search API"],
+              "synonyms":["Rag pipeline", "Rag search", "Rag search engine", "Rag search API","agent search"]
             }
         ]
 
@@ -89,7 +107,7 @@ class UserProfileEnrichmentAgent(BaseAgent):
 
     def _get_system_prompt(self) -> str:
         examples_text = "\n\n".join([
-            f"Company: {ex['company']}\nRole: {ex['role']}\nDescription: {ex['description']}\nIndustry: {ex['industry']}\nSector: {ex['sector']}\nClients Industries: {', '.join(ex['clients_industries'])}\nCompetitors: {', '.join(ex['competitors'])}\nKnown Clients: {', '.join(ex['known_clients'])}\nPartners: {', '.join(ex['partners'])}"
+            f"Company: {ex['company']}\nRole: {ex['role']}\nDescription: {ex['description']}\nIndustry: {ex['industry']}\nSector: {ex['sector']}\nClients Industries: {', '.join(ex.get('customer_segments', []))}\nKnown Clients: {', '.join(ex.get('known_clients', []))}\nPartners: {', '.join(ex.get('partners', []))}"
             for ex in self.examples
         ])
 
@@ -110,14 +128,11 @@ Guidelines:
    - SaaS tools: "Software as a Service" or specific vertical (e.g., "Marketing Technology")
    - E-commerce: "E-commerce Platform" or "Online Retail"
    - Fintech: "Financial Technology" or specific area (e.g., "Payment Processing")
-4. Focus on the most relevant DIRECT competitors (companies offering similar products/services to similar customers)
-5. For competitors, prioritize companies that customers would compare or choose between in the SAME business model/industry
-6. Avoid including partners, vendors, or companies in completely different industries as competitors
-7. If the company provides APIs or technical services, focus on similar API/technology competitors, not end-user applications
 8. Consider the user's role when determining what information is most important
 9. Keep lists concise but comprehensive (max 10 items each)
 10. Ensure all fields are populated with meaningful information based on actual business activities
 11. For technology companies, be precise about their technology focus in both industry and sector fields"""
+
 
     async def _search_with_tavily(self, query: str, websocket_manager=None, job_id=None) -> Optional[str]:
         try:
@@ -292,154 +307,6 @@ Business Description:"""
             self.logger.error(f"Fallback company search error: {e}")
             return ""
 
-    async def _find_competitors_with_llm(self, company: str, company_description: str = "", industry: str = "", websocket_manager=None, job_id=None) -> List[str]:
-        try:
-            await self.send_status_update(
-                websocket_manager, job_id,
-                status="processing",
-                message=f"Finding competitors for {company}",
-                result={"step": "Profile Enrichment", "substep": "competitor_analysis"}
-            )
-
-            # Enhanced competitor identification with company context
-            competitor_prompt = f"""You are a business intelligence expert with comprehensive knowledge of companies and competitive landscapes.
-
-Company Information:
-- Company Name: {company}
-- Business Description: {company_description or "Not available"}
-- Industry: {industry or "Not specified"}
-
-Based on this information, identify the main DIRECT competitors of {company}.
-
-Consider companies that:
-1. Operate in the same industry and market segment as {company}
-2. Offer similar products or services to what {company} offers
-3. Target similar customer demographics
-4. Would be considered alternatives that customers compare when making purchasing decisions
-5. Have similar business models or value propositions
-
-CRITICAL INSTRUCTIONS:
-- If {company} provides AI/search/API services, focus on AI search API competitors, NOT travel companies
-- If {company} is in technology/software, find technology competitors, NOT unrelated industries
-- Use the business description to understand what {company} actually does
-- Return ONLY company names (no descriptions, explanations, or additional text)
-- Separate names with commas
-- Do NOT include {company} itself
-- Do NOT include customers, partners, suppliers, or vendors
-- Do NOT include generic terms like "startups", "companies", "businesses"
-- Focus on DIRECT competitors offering similar services/products
-- Maximum 8 competitors
-- Use well-known, established competitor names
-- If uncertain about the business model, be conservative and return fewer competitors
-
-Main competitors of {company}:"""
-
-            result = await self.llm.ainvoke(competitor_prompt)
-            raw_competitors = result.content.strip()
-            
-            # Clean and validate extracted competitors
-            competitors = []
-            if raw_competitors:
-                potential_competitors = [c.strip() for c in raw_competitors.split(",") if c.strip()]
-                
-                for competitor in potential_competitors:
-                    # Clean up the competitor name
-                    cleaned = self._clean_competitor_name(competitor)
-                    
-                    # Validate it looks like a real company name
-                    if self._validate_competitor_name(cleaned, company):
-                        competitors.append(cleaned)
-            
-            self.logger.info(f"GPT identified {len(competitors)} competitors for {company} (industry: {industry}): {competitors}")
-            return competitors[:10]  # Limit to top 10 competitors
-            
-        except Exception as e:
-            self.logger.error(f"Competitor analysis error: {e}")
-            return []
-
-    def _clean_competitor_name(self, name: str) -> str:
-        """Clean and normalize competitor names."""
-        # Remove common prefixes/suffixes and clean formatting
-        name = name.strip()
-        
-        # Remove quotes and extra whitespace
-        name = name.replace('"', '').replace("'", "").strip()
-        
-        # Remove common business suffixes for cleaner names (but keep them if they're part of the brand)
-        # Don't remove if it's clearly part of the brand name
-        suffixes_to_consider = [' Inc', ' Inc.', ' Corp', ' Corp.', ' LLC', ' Ltd', ' Ltd.', ' Co', ' Co.']
-        
-        # Only remove if the name would still be meaningful without it
-        for suffix in suffixes_to_consider:
-            if name.endswith(suffix) and len(name.replace(suffix, '').strip()) > 2:
-                name = name.replace(suffix, '').strip()
-                break
-        
-        return name
-
-    def _validate_competitor_name(self, name: str, company: str) -> bool:
-        """Validate that a competitor name looks legitimate."""
-        if not name or len(name) < 2:
-            return False
-        
-        # Don't include the company itself
-        if name.lower() == company.lower():
-            return False
-        
-        # Filter out generic terms
-        generic_terms = {
-            'competitors', 'companies', 'startups', 'businesses', 'firms', 'services', 
-            'solutions', 'platforms', 'providers', 'vendors', 'others', 'alternatives',
-            'industry', 'market', 'sector', 'players', 'leaders', 'enterprises'
-        }
-        
-        if name.lower() in generic_terms:
-            return False
-        
-        # Filter out names that are too short or look like fragments
-        if len(name) < 3 or name.count(' ') > 5:  # Avoid very short names or very long descriptions
-            return False
-        
-        # Must start with a capital letter (proper company names do)
-        if not name[0].isupper():
-            return False
-        
-        return True
-
-
-
-    async def _get_fallback_competitors(self, company: str, industry: str) -> List[str]:
-        """Fallback method to identify competitors when online search fails."""
-        try:
-            fallback_prompt = f"""You are a business intelligence expert. Based on your knowledge, identify the main competitors for {company} in the {industry} industry.
-
-Consider companies that:
-1. Operate in the same market segment as {company}
-2. Offer similar products or services
-3. Target similar customer demographics
-4. Are well-known players in the {industry} space
-
-Return only the company names separated by commas, maximum 5 competitors.
-Focus on established, well-known competitors that would be considered direct rivals.
-
-Main competitors of {company}:"""
-
-            result = await self.llm.ainvoke(fallback_prompt)
-            competitors = [c.strip() for c in result.content.split(",") if c.strip()]
-            
-            # Validate fallback competitors
-            validated = []
-            for competitor in competitors:
-                cleaned = self._clean_competitor_name(competitor)
-                if self._validate_competitor_name(cleaned, company):
-                    validated.append(cleaned)
-            
-            return validated[:5]  # Return max 5 fallback competitors
-            
-        except Exception as e:
-            self.logger.error(f"Fallback competitor identification failed: {e}")
-            return []
-
     async def enrich_profile_async(self, company: str, role: str, company_url: Optional[str] = None, websocket_manager=None, job_id=None) -> Dict[str, Any]:
         """Async version of enrich_profile with websocket integration."""
         try:
@@ -475,46 +342,10 @@ Main competitors of {company}:"""
 
             enriched_data = result.model_dump()
 
-            # ENHANCED: Use focused competitor discovery agent
             company_description = enriched_data.get("description", "") or additional_info
             industry = enriched_data.get("industry", "Technology")
             sector = enriched_data.get("sector", "Software")
             
-            # Use the focused competitor discovery agent
-            discovery_result = await self.competitor_agent.discover_competitors(
-                company=company,
-                description=company_description,
-                industry=industry,
-                sector=sector,
-                websocket_manager=websocket_manager,
-                job_id=job_id
-            )
-            
-            # Extract competitors from discovery result
-            discovered_competitors = discovery_result.get("competitors", [])
-            
-            # Merge with any LLM-generated competitors from profile
-            llm_competitors = enriched_data.get("competitors", [])
-            
-            # Combine and deduplicate competitors
-            all_competitors = []
-            seen_competitors = set()
-            
-            # Prioritize discovered competitors (more accurate)
-            for competitor in discovered_competitors:
-                competitor_lower = competitor.lower()
-                if competitor_lower not in seen_competitors:
-                    all_competitors.append(competitor)
-                    seen_competitors.add(competitor_lower)
-            
-            # Add LLM competitors that aren't duplicates
-            for competitor in llm_competitors:
-                competitor_lower = competitor.lower()
-                if competitor_lower not in seen_competitors and len(all_competitors) < 10:
-                    all_competitors.append(competitor)
-                    seen_competitors.add(competitor_lower)
-            
-            enriched_data["competitors"] = all_competitors[:10]  # Limit to top 10
 
             await self.send_status_update(
                 websocket_manager, job_id,
@@ -547,43 +378,14 @@ Main competitors of {company}:"""
                 "description": "A company in the business sector",
                 "industry": "Unknown",
                 "sector": "Unknown",
-                "clients_industries": [],
-                "competitors": [],
+                "customer_segments": [],
                 "known_clients": [],
-                "partners": []
+                "partners": [],
+                "use_cases": [],
+                "core_products": [],
+                "synonyms": []
             }
 
-        """Synchronous version of enrich_profile for backward compatibility."""
-        try:
-            # Discover or confirm URL
-            if not company_url:
-                # Note: This would need to be made async or use sync client
-                pass
-
-            # Run enrichment chain with additional_info injected
-            result = self.chain.invoke({
-                "company": company,
-                "role": role,
-                "additional_info": ""
-            })
-
-            enriched_data = result.model_dump()
-
-            return enriched_data
-
-        except Exception as e:
-            self.logger.error(f"Error enriching profile for {company}: {e}")
-            return {
-                "company": company,
-                "role": role,
-                "description": "A company in the business sector",
-                "industry": "Unknown",
-                "sector": "Unknown",
-                "clients_industries": [],
-                "competitors": [],
-                "known_clients": [],
-                "partners": []
-            }
 
     async def run(self, state: InputState) -> ResearchState:
         """Main entry point for the profile enrichment agent following the common node pattern."""
@@ -603,13 +405,6 @@ Main competitors of {company}:"""
             job_id=job_id
         )
         
-        # Log competitor identification results for debugging
-        competitors = enriched_profile.get('competitors', [])
-        self.logger.info(f"Profile enrichment completed for {company}. Found {len(competitors)} competitors: {competitors[:5]}")
-        
-        if not competitors:
-            self.logger.warning(f"No competitors identified for {company}. This may indicate an issue with competitor discovery.")
-
         # Create ResearchState with enriched profile
         research_state = {
             # Copy input fields
@@ -639,6 +434,11 @@ Main competitors of {company}:"""
             "categorized_queries": {},
             "total_queries": 0,
             "query_collection_complete": False,
+            "known_clients": enriched_profile.get("known_clients", []),
+            "use_cases": enriched_profile.get("use_cases", []),
+            "core_products": enriched_profile.get("core_products", []),
+            "synonyms": enriched_profile.get("synonyms", []),
+            "customer_segments": enriched_profile.get("customer_segments", []),
             # Pass through websocket info
             "websocket_manager": websocket_manager,
             "job_id": job_id

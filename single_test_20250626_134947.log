@@ -1,0 +1,31 @@
+2025-06-26 13:49:47,040 - __main__ - INFO - ============================================================
+2025-06-26 13:49:47,042 - __main__ - INFO - TESTING COMPETITOR DISCOVERY FOR TAVILY
+2025-06-26 13:49:47,043 - __main__ - INFO - ============================================================
+2025-06-26 13:49:47,043 - __main__ - INFO - Profile: {
+  "company": "Tavily",
+  "description": "AI-powered search API for developers and researchers, providing real-time web search with AI-enhanced results",
+  "industry": "Technology",
+  "sector": "AI Search",
+  "core_products": [
+    "Search API",
+    "AI Search Engine",
+    "Research Assistant"
+  ],
+  "use_cases": [
+    "Developer tools",
+    "Research automation",
+    "AI applications"
+  ],
+  "customer_segments": [
+    "Developers",
+    "Researchers",
+    "AI companies"
+  ],
+  "synonyms": [
+    "AI search",
+    "search API",
+    "intelligent search"
+  ]
+}
+2025-06-26 13:49:47,044 - __main__ - INFO - Expected good competitors: ['Perplexity', 'SearchGPT', 'You.com', 'Exa', 'Metaphor', 'Bing Chat', 'Phind', 'Kagi']
+2025-06-26 13:49:47,044 - __main__ - INFO - Should avoid: ['Google', 'Microsoft', 'Amazon', 'Apple', 'Meta', 'Facebook', 'IBM', 'Oracle']

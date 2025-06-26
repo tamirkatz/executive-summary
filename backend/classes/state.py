@@ -43,6 +43,12 @@ class ResearchState(InputState):
     categorized_queries: Dict[str, List[str]]  # Queries organized by category from Collector
     total_queries: int  # Total number of queries generated
     query_collection_complete: bool  # Flag indicating query collection is complete
+    # Profile-derived fields for easier access
+    known_clients: NotRequired[List[str]]  # Notable clients from profile
+    use_cases: NotRequired[List[str]]  # Use cases from profile  
+    core_products: NotRequired[List[str]]  # Core products from profile
+    synonyms: NotRequired[List[str]]  # Synonyms from profile
+    customer_segments: NotRequired[List[str]]  # Customer segments from profile
 
 default_research_state = {
     "site_scrape": {},
@@ -73,5 +79,11 @@ default_research_state = {
     "query_generation_complete": False,
     "categorized_queries": {},
     "total_queries": 0,
-    "query_collection_complete": False
+    "query_collection_complete": False,
+    # Profile-derived fields
+    "known_clients": [],
+    "use_cases": [],
+    "core_products": [],
+    "synonyms": [],
+    "customer_segments": []
 }

@@ -81,42 +81,71 @@ Guidelines:
                 result={"step": "Company Info Extraction", "substep": "searching"}
             )
 
+            self.logger.info(f"Tavily URL search query: '{query}'")
             results = await self.tavily.search(query=query)
-            return results["results"][0]["url"] if results["results"] else None
+            
+            if results and results.get("results"):
+                discovered_url = results["results"][0]["url"]
+                self.logger.info(f"Tavily URL discovery successful: '{discovered_url}' for query: '{query}'")
+                return discovered_url
+            else:
+                self.logger.warning(f"Tavily URL discovery returned no results for query: '{query}'")
+                return None
+                
         except Exception as e:
-            self.logger.error(f"Tavily search error: {e}")
+            self.logger.error(f"Tavily search error for query '{query}': {e}")
             return None
 
     async def _scrape_company_info(self, url: str, websocket_manager=None, job_id=None) -> str:
-        """Enhanced company information extraction using comprehensive Tavily crawling."""
+        """Enhanced company information extraction using Tavily extract functionality."""
         try:
             await self.send_status_update(
                 websocket_manager, job_id,
                 status="processing",
-                message=f"Deep crawling business information from {url}",
+                message=f"Extracting business information from {url}",
                 result={"step": "Company Info Extraction", "substep": "deep_extraction"}
             )
 
-            # Try direct website crawling
+            # Use Tavily extract functionality (like grounding.py)
             try:
-                crawl_response = await self.tavily.search(
-                    query=f"site:{url}",
-                    search_depth="advanced",
-                    max_results=5,
-                    include_answer=True,
-                    include_raw_content=True
-                )
-                if crawl_response.get("results"):
-                    content = crawl_response["results"][0].get("content", "")
-                    if content:
-                        return content
+                extract_response = await self.tavily.extract(url, extract_depth="basic")
+                
+                raw_contents = []
+                for item in extract_response.get("results", []):
+                    if content := item.get("raw_content"):
+                        raw_contents.append(content)
+                
+                if raw_contents:
+                    combined_content = "\n\n".join(raw_contents)
+                    self.logger.info(f"Successfully extracted {len(raw_contents)} content sections from {url}")
+                    return combined_content
+                else:
+                    self.logger.warning(f"No content found in extraction results for {url}")
+                    
             except Exception as e:
-                self.logger.warning(f"Direct crawl failed for {url}: {e}")
+                self.logger.warning(f"Tavily extract failed for {url}: {e}")
+                
+                # Fallback to basic search if extract fails
+                try:
+                    search_response = await self.tavily.search(
+                        query=f"site:{url}",
+                        search_depth="basic",
+                        max_results=3,
+                        include_answer=True,
+                        include_raw_content=True
+                    )
+                    if search_response.get("results"):
+                        content = search_response["results"][0].get("content", "")
+                        if content:
+                            self.logger.info(f"Fallback search successful for {url}")
+                            return content
+                except Exception as fallback_e:
+                    self.logger.warning(f"Fallback search also failed for {url}: {fallback_e}")
 
             return ""
 
         except Exception as e:
-            self.logger.error(f"Enhanced company info extraction error for {url}: {e}")
+            self.logger.error(f"Company info extraction error for {url}: {e}")
             return ""
 
     async def extract_company_info_async(self, company: str, role: str, company_url: Optional[str] = None, websocket_manager=None, job_id=None) -> Dict[str, Any]:
@@ -129,14 +158,58 @@ Guidelines:
                 result={"step": "Company Info Extraction", "substep": "initialization"}
             )
 
+            self.logger.info(f"Company info extraction started for '{company}' with provided URL: {company_url}")
+
             # Discover or confirm URL
             if not company_url:
+                self.logger.info(f"No URL provided for '{company}', attempting URL discovery")
                 company_url = await self._search_with_tavily(f"{company} official website", websocket_manager, job_id)
+                if not company_url:
+                    self.logger.warning(f"URL discovery failed for '{company}', proceeding with general search")
+            else:
+                self.logger.info(f"Using provided URL for '{company}': {company_url}")
 
             # Scrape extended company info
             additional_info = ""
             if company_url:
+                self.logger.info(f"Attempting to extract content from: {company_url}")
                 additional_info = await self._scrape_company_info(company_url, websocket_manager, job_id)
+                if not additional_info:
+                    self.logger.warning(f"Content extraction failed from {company_url}, trying general search fallback")
+                    # Fallback to general company search if website extraction fails
+                    try:
+                        search_response = await self.tavily.search(
+                            query=f'"{company}" company business description',
+                            max_results=3,
+                            include_answer=True
+                        )
+                        if search_response.get("results"):
+                            additional_info = search_response["results"][0].get("content", "")
+                            self.logger.info(f"General search fallback successful for '{company}'")
+                        else:
+                            self.logger.warning(f"General search fallback returned no results for '{company}'")
+                    except Exception as search_e:
+                        self.logger.error(f"General search fallback failed for '{company}': {search_e}")
+                else:
+                    self.logger.info(f"Successfully extracted content for '{company}' from {company_url}")
+            else:
+                # No URL found, try general search
+                try:
+                    self.logger.info(f"No URL available for '{company}', attempting general search")
+                    search_response = await self.tavily.search(
+                        query=f'"{company}" company business description',
+                        max_results=3,
+                        include_answer=True
+                    )
+                    if search_response.get("results"):
+                        additional_info = search_response["results"][0].get("content", "")
+                        self.logger.info(f"General search successful for '{company}' without URL")
+                    else:
+                        self.logger.warning(f"General search returned no results for '{company}'")
+                except Exception as search_e:
+                    self.logger.error(f"General search failed for '{company}': {search_e}")
+
+            self.logger.info(f"Additional info length for '{company}': {len(additional_info)} characters")
 
             # Run extraction chain with additional_info injected
             result = await self.chain.ainvoke({
@@ -158,10 +231,12 @@ Guidelines:
                 }
             )
 
+            self.logger.info(f"Company info extraction completed successfully for '{company}'")
             return company_info
 
         except Exception as e:
             error_msg = f"Error extracting company info for {company}: {str(e)}"
+            self.logger.error(f"Company info extraction failed for '{company}': {e}", exc_info=True)
             self.log_agent_error({"company": company}, e)
             
             await self.send_error_update(
@@ -172,7 +247,7 @@ Guidelines:
             )
 
             # Return fallback profile
-            return {
+            fallback_profile = {
                 "company": company,
                 "role": role,
                 "description": "A company in the business sector",
@@ -182,6 +257,8 @@ Guidelines:
                 "known_clients": [],
                 "partners": []
             }
+            self.logger.info(f"Returning fallback profile for '{company}'")
+            return fallback_profile
 
     async def run(self, state: InputState) -> ResearchState:
         """Main entry point for the company info agent."""

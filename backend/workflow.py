@@ -18,8 +18,8 @@ from .nodes.interest_inference_agent import InterestInferenceAgent
 from .nodes.research_intent_planner import ResearchIntentPlanner
 from .nodes.query_composer import QueryComposer
 from .nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
-from .nodes.profile_enrichment_orchestrator import ProfileEnrichmentOrchestrator
 from .nodes.executive_report_composer import ExecutiveReportComposer
+from .nodes.competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,10 @@ class Graph:
         self.enricher = Enricher()
         self.insight_synthesizer = InsightSynthesizer()
         
-        self.profile_enrichment_agent = ProfileEnrichmentOrchestrator()
+        # Add competitor discovery agent as a separate node
+        self.competitor_discovery_agent = EnhancedCompetitorDiscoveryAgent()
+        
+        self.profile_enrichment_agent = UserProfileEnrichmentAgent()
             
         self.interest_inference_agent = InterestInferenceAgent()
         self.research_intent_planner = ResearchIntentPlanner()
@@ -72,10 +75,13 @@ class Graph:
 
     def _build_workflow(self):
         """Configure the state graph workflow"""
+        # Use InputState for the first node (competitor_discovery) since it can handle the conversion
+        # All subsequent nodes will work with ResearchState
         self.workflow = StateGraph(ResearchState)
         
         # Add nodes with their respective processing functions
         # self.workflow.add_node("grounding", self.ground.run)
+        self.workflow.add_node("competitor_discovery", self.competitor_discovery_agent.run)
         self.workflow.add_node("user_profile_enrichment", self.profile_enrichment_agent.run)
         self.workflow.add_node("interest_inference", self.interest_inference_agent.run)
         self.workflow.add_node("research_intent_planning", self.research_intent_planner.run)
@@ -95,8 +101,11 @@ class Graph:
         self.workflow.set_entry_point("user_profile_enrichment")
         self.workflow.set_finish_point("executive_report_composer")
         
-        # Connect profile enrichment to interest inference
-        self.workflow.add_edge("user_profile_enrichment", "interest_inference")
+        # Connect profile enrichment to competitor discovery
+        self.workflow.add_edge("user_profile_enrichment", "competitor_discovery")
+        
+        # Connect competitor discovery to interest inference
+        self.workflow.add_edge("competitor_discovery", "interest_inference")
         
         # Connect interest inference to research intent planning
         self.workflow.add_edge("interest_inference", "research_intent_planning")
@@ -121,7 +130,6 @@ class Graph:
         # Connect remaining nodes
         self.workflow.add_edge("curator", "enricher")
         self.workflow.add_edge("enricher", "executive_report_composer")
-        
 
     async def run(self, thread: Dict[str, Any]) -> AsyncIterator[Dict[str, Any]]:
         """Execute the research workflow"""

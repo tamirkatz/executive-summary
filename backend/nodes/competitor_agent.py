@@ -14,13 +14,13 @@ from ..agents.base_agent import BaseAgent
 logger = logging.getLogger(__name__)
 
 
-class FocusedCompetitorDiscoveryAgent(BaseAgent):
+class CompetitorDiscoveryAgent(BaseAgent):
     """
     Focused competitor discovery agent that uses precise, targeted searches
     and robust validation to find real competitors.
     """
     
-    def __init__(self, model_name: str = "gpt-4o-mini"):
+    def __init__(self, model_name: str = "gpt-03-mini"):
         super().__init__(agent_type="focused_competitor_discovery_agent")
         
         self.llm = ChatOpenAI(
@@ -31,13 +31,13 @@ class FocusedCompetitorDiscoveryAgent(BaseAgent):
         self.tavily = AsyncTavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
     async def discover_competitors(self, company: str, description: str, industry: str, 
-                                 sector: str, websocket_manager=None, job_id=None) -> List[str]:
-        """Discover competitors using focused, validated searches."""
+                                 sector: str, websocket_manager=None, job_id=None) -> Dict[str, Any]:
+        """Discover competitors using focused, validated searches with enriched profile data."""
         
         await self.send_status_update(
             websocket_manager, job_id,
             status="processing",
-            message=f"🎯 Focused competitor discovery for {company}",
+            message=f"🎯 Focused competitor discovery for {company} in {industry} {sector}",
             result={"step": "Focused Competitor Discovery", "substep": "targeted_search"}
         )
         
@@ -47,7 +47,7 @@ class FocusedCompetitorDiscoveryAgent(BaseAgent):
         competitors = await self._targeted_competitor_search(company, description, industry, sector)
         all_competitors.update(competitors)
         
-        # Use LLM to generate high-quality competitors based on industry knowledge
+        # Use LLM to generate high-quality competitors based on industry knowledge and profile
         llm_competitors = await self._llm_competitor_generation(company, description, industry, sector)
         all_competitors.update(llm_competitors)
         
@@ -57,11 +57,17 @@ class FocusedCompetitorDiscoveryAgent(BaseAgent):
         await self.send_status_update(
             websocket_manager, job_id,
             status="competitor_discovery_complete",
-            message=f"✅ Found {len(validated_competitors)} validated competitors",
+            message=f"✅ Found {len(validated_competitors)} validated competitors for {company}",
             result={"competitors": validated_competitors}
         )
         
-        return validated_competitors
+        return {
+            "competitors": validated_competitors,
+            "discovery_method": "enhanced_profile_based",
+            "source_industry": industry,
+            "source_sector": sector,
+            "total_candidates": len(all_competitors)
+        }
 
     async def _targeted_competitor_search(self, company: str, description: str, 
                                         industry: str, sector: str) -> Set[str]:
@@ -332,21 +338,43 @@ Competitors:"""
         
         return min(confidence, 1.0)
 
-    async def run(self, state: ResearchState) -> ResearchState:
+    async def run(self, state) -> ResearchState:
         """Main entry point for focused competitor discovery."""
         
         company = state.get('company', 'Unknown Company')
-        company_info = state.get('company_info', {})
         
-        description = company_info.get('description', '')
-        industry = company_info.get('industry', 'Technology')
-        sector = company_info.get('sector', 'Software')
+        # Get enriched profile data from user_profile_enrichment step
+        profile = state.get('profile', {})
+        
+        # Extract comprehensive company information from profile
+        description = profile.get('description', '')
+        industry = profile.get('industry', 'Technology')
+        sector = profile.get('sector', 'Software')
+        clients_industries = profile.get('customer_segments', [])  # Use customer_segments from EnrichedProfile
+        known_clients = profile.get('known_clients', [])
+        partners = profile.get('partners', [])
+        
+        # If we don't have profile data, create minimal info for competitor discovery
+        if not profile:
+            self.logger.warning(f"No profile data available for {company}. Using minimal competitor discovery.")
+            description = ''
+            industry = 'Technology'
+            sector = 'Software'
+        else:
+            self.logger.info(f"Using enriched profile data for {company}: Industry={industry}, Sector={sector}")
         
         websocket_manager, job_id = self.get_websocket_info(state)
 
         self.log_agent_start(state)
 
-        # Execute focused competitor discovery
+        await self.send_status_update(
+            websocket_manager, job_id,
+            status="processing", 
+            message=f"🎯 Discovering competitors for {company} using enriched profile data",
+            result={"step": "Competitor Discovery", "substep": "profile_analysis"}
+        )
+
+        # Execute focused competitor discovery with enriched data
         competitors = await self.discover_competitors(
             company=company,
             description=description,
@@ -356,19 +384,31 @@ Competitors:"""
             job_id=job_id
         )
         
-        self.logger.info(f"🎯 Focused discovery found {len(competitors)} competitors for {company}")
+        self.logger.info(f"🎯 Focused discovery found {len(competitors['competitors'])} competitors for {company}")
         
-        # Update state
-        updated_state = state.copy()
+        # Update ResearchState with competitor data
+        research_state = state.copy()
         
-        if 'company_info' in updated_state:
-            updated_state['company_info']['competitors'] = competitors
-        else:
-            updated_state['company_info'] = {'competitors': competitors}
+        # Store comprehensive company info including competitors
+        company_info = {
+            'company': company,
+            'description': description,
+            'industry': industry,
+            'sector': sector,
+            'clients_industries': clients_industries,
+            'known_clients': known_clients,
+            'partners': partners,
+            'competitors': competitors['competitors']
+        }
+        
+        research_state['company_info'] = company_info
+        
+        # Log the comprehensive company info for next steps
+        self.logger.info(f"Company info prepared for next steps: {list(company_info.keys())}")
 
         self.log_agent_complete(state)
-        return updated_state
+        return research_state
 
 
 # Use this as the main competitor discovery agent
-CompetitorDiscoveryAgent = FocusedCompetitorDiscoveryAgent 
+CompetitorDiscoveryAgent = CompetitorDiscoveryAgent 

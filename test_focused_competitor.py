@@ -1,94 +1,95 @@
+#!/usr/bin/env python3
+"""
+Quick test for base44 competitor discovery to validate improvements
+"""
+
 import asyncio
-import os
-import sys
 import logging
-from dotenv import load_dotenv
+import sys
+import os
 
-# Add the backend directory to Python path
-sys.path.append('backend')
+# Add the project root to the path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Load environment variables
-load_dotenv()
+from backend.nodes.competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 logger = logging.getLogger(__name__)
 
-from backend.nodes.focused_competitor_agent import FocusedCompetitorDiscoveryAgent
-
-async def test_focused_competitor_discovery():
-    """Test the focused competitor discovery agent."""
+async def test_base44_competitor_discovery():
+    """Test competitor discovery for base44"""
     
-    # Initialize the agent
-    agent = FocusedCompetitorDiscoveryAgent()
+    # Base44 profile (from the websocket message)
+    base44_profile = {
+        "company": "base44",
+        "role": "ceo",
+        "description": "Base44 is a Software-as-a-Service (SaaS) platform that enables users to create fully functioning web applications without the need for coding, utilizing a natural language development approach. The primary target market includes creative professionals, small business owners, and individuals with app ideas who seek to build custom applications quickly and efficiently. Key technologies employed by Base44 include artificial intelligence for app development and integration capabilities with third-party services.",
+        "industry": "Software as a Service",
+        "sector": "No-Code Development Platform",
+        "customer_segments": ["Creative Professionals", "Small Business Owners", "Individuals with App Ideas"],
+        "known_clients": [],
+        "partners": [],
+        "use_cases": ["Building Custom Web Applications", "Rapid Prototyping", "No-Code Development", "Integration with Third-Party Services", "AI-Driven App Development"],
+        "core_products": ["No-Code Application Builder", "Natural Language Development Interface", "Integration Tools", "AI Development Features"],
+        "synonyms": ["No-Code Platform", "Low-Code Development", "App Builder", "SaaS Development Tool"]
+    }
     
-    # Test companies
-    test_cases = [
-        {
-            "company": "Stripe",
-            "description": "Payment processing platform for online businesses and developers",
-            "industry": "Financial Technology",
-            "sector": "Payments"
-        },
-        {
-            "company": "Shopify", 
-            "description": "E-commerce platform enabling businesses to create online stores",
-            "industry": "E-commerce",
-            "sector": "Retail Technology"
-        },
-        {
-            "company": "Slack",
-            "description": "Business communication platform for team collaboration", 
-            "industry": "Software",
-            "sector": "Communication"
-        }
-    ]
+    # Expected competitors for no-code platforms
+    expected_competitors = {
+        "bubble", "webflow", "retool", "glide", "adalo", "appgyver", 
+        "mendix", "outsystems", "powerapps", "appsheet", "thunkable",
+        "flutterflow", "bravo studio", "draftbit", "build.ai", "zapier"
+    }
     
-    for test_case in test_cases:
-        print(f"\n{'='*80}")
-        print(f"🧪 Testing: {test_case['company']}")
-        print(f"📋 Description: {test_case['description']}")
-        print(f"🏢 Industry/Sector: {test_case['industry']}/{test_case['sector']}")
-        print("="*80)
+    logger.info("=== TESTING BASE44 COMPETITOR DISCOVERY ===")
+    logger.info(f"Target: {base44_profile['company']}")
+    logger.info(f"Sector: {base44_profile['sector']}")
+    logger.info(f"Expected competitors: {expected_competitors}")
+    
+    # Initialize agent
+    agent = EnhancedCompetitorDiscoveryAgent()
+    
+    try:
+        # Run competitor discovery
+        result = await agent.discover_competitors(
+            enriched_profile=base44_profile,
+            websocket_manager=None,
+            job_id=None
+        )
         
-        try:
-            # Run discovery
-            competitors = await agent.discover_competitors(
-                company=test_case['company'],
-                description=test_case['description'], 
-                industry=test_case['industry'],
-                sector=test_case['sector']
-            )
+        competitors = result.get('competitors', [])
+        competitor_names = {comp['name'].lower() for comp in competitors}
+        
+        logger.info(f"=== RESULTS ===")
+        logger.info(f"Found {len(competitors)} competitors:")
+        for comp in competitors:
+            logger.info(f"  - {comp['name']} (confidence: {comp.get('confidence_score', 'N/A')})")
+        
+        # Calculate accuracy
+        matches = competitor_names.intersection(expected_competitors)
+        accuracy = len(matches) / len(expected_competitors) * 100 if expected_competitors else 0
+        
+        logger.info(f"=== ACCURACY ANALYSIS ===")
+        logger.info(f"Expected: {len(expected_competitors)} competitors")
+        logger.info(f"Found: {len(competitors)} competitors")
+        logger.info(f"Matches: {len(matches)} ({matches})")
+        logger.info(f"Accuracy: {accuracy:.1f}%")
+        
+        if accuracy > 20:
+            logger.info("✅ SUCCESS: Good accuracy achieved!")
+        else:
+            logger.warning("⚠️ WARNING: Low accuracy, needs improvement")
             
-            print(f"\n🎯 RESULTS:")
-            print(f"Found {len(competitors)} competitors:")
-            
-            for i, competitor in enumerate(competitors, 1):
-                print(f"{i:2}. {competitor}")
-            
-            if not competitors:
-                print("❌ No competitors found!")
-            else:
-                print(f"\n✅ Successfully found {len(competitors)} competitors")
-                
-        except Exception as e:
-            logger.error(f"❌ Test failed for {test_case['company']}: {e}")
-            import traceback
-            traceback.print_exc()
+        return accuracy, len(competitors)
+        
+    except Exception as e:
+        logger.error(f"❌ Test failed: {e}", exc_info=True)
+        return 0, 0
 
 if __name__ == "__main__":
-    print("🚀 Starting Focused Competitor Discovery Tests")
-    
-    # Check API keys
-    if not os.getenv("OPENAI_API_KEY"):
-        print("❌ OPENAI_API_KEY not found")
-        sys.exit(1)
-    
-    if not os.getenv("TAVILY_API_KEY"):
-        print("❌ TAVILY_API_KEY not found")
-        sys.exit(1)
-    
-    print("✅ API keys found")
-    
-    # Run test
-    asyncio.run(test_focused_competitor_discovery()) 
+    asyncio.run(test_base44_competitor_discovery()) 

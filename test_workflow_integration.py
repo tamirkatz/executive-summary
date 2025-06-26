@@ -5,8 +5,16 @@ into both the standard and enhanced workflows.
 
 import asyncio
 import logging
+import sys
+import os
 from backend.workflow import Graph
 from backend.enhanced_workflow import EnhancedGraph, create_enhanced_workflow
+
+# Add the project root to the path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from backend.nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
+from backend.nodes.competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -196,6 +204,71 @@ async def demonstrate_workflow_capabilities():
     print(f"   • 📈 Real-time progress tracking and WebSocket updates")
 
 
+async def test_workflow_integration():
+    """Test the exact workflow integration sequence"""
+    
+    logger.info("=== TESTING WORKFLOW INTEGRATION ===")
+    
+    # Step 1: Create initial input state (exactly like the workflow does)
+    input_state = {
+        'company': 'base44',
+        'company_url': None,
+        'user_role': 'ceo',
+        'websocket_manager': None,
+        'job_id': None
+    }
+    
+    logger.info(f"Initial input state: {input_state}")
+    
+    # Step 2: Run UserProfileEnrichmentAgent (exactly like the workflow does)
+    logger.info("Step 1: Running UserProfileEnrichmentAgent...")
+    profile_agent = UserProfileEnrichmentAgent()
+    
+    try:
+        research_state = await profile_agent.run(input_state)
+        
+        logger.info(f"Profile enrichment completed!")
+        logger.info(f"Research state keys: {list(research_state.keys())}")
+        logger.info(f"Profile in state: {'profile' in research_state}")
+        
+        if 'profile' in research_state:
+            profile = research_state['profile']
+            logger.info(f"Profile keys: {list(profile.keys())}")
+            logger.info(f"Profile company: {profile.get('company', 'NOT_FOUND')}")
+            logger.info(f"Profile sector: {profile.get('sector', 'NOT_FOUND')}")
+        else:
+            logger.error("❌ No profile found in research state!")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Profile enrichment failed: {e}", exc_info=True)
+        return False
+    
+    # Step 3: Run EnhancedCompetitorDiscoveryAgent (exactly like the workflow does)
+    logger.info("Step 2: Running EnhancedCompetitorDiscoveryAgent...")
+    competitor_agent = EnhancedCompetitorDiscoveryAgent()
+    
+    try:
+        updated_state = await competitor_agent.run(research_state)
+        
+        competitors = updated_state.get('competitors', [])
+        logger.info(f"Competitor discovery completed!")
+        logger.info(f"Found {len(competitors)} competitors")
+        
+        if len(competitors) > 0:
+            logger.info("✅ SUCCESS: Competitors found in workflow integration!")
+            for i, comp in enumerate(competitors[:5]):
+                logger.info(f"  {i+1}. {comp.get('name', 'Unknown')} (confidence: {comp.get('confidence_score', 'N/A')})")
+            return True
+        else:
+            logger.warning("⚠️ WARNING: No competitors found in workflow integration")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Competitor discovery failed: {e}", exc_info=True)
+        return False
+
+
 async def main():
     """Run all integration tests."""
     
@@ -225,6 +298,12 @@ async def main():
         print(f"   • Use 'use_enhanced_profile_enrichment=True' for the new system")
         print(f"   • Use 'use_enhanced_profile_enrichment=False' for legacy behavior") 
         print(f"   • Default is the new enhanced system for better competitor discovery")
+        
+        success = await test_workflow_integration()
+        if success:
+            print("🎉 Workflow integration test PASSED!")
+        else:
+            print("❌ Workflow integration test FAILED!")
         
     except Exception as e:
         logger.error(f"Integration test failed: {e}")
