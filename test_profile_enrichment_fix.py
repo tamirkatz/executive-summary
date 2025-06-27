@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 from backend.nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
-from backend.nodes.competitor_agent import CompetitorDiscoveryAgent
+from backend.nodes.competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -51,7 +51,7 @@ async def test_profile_enrichment():
         # Test competitor discovery with the enriched state
         print("🎯 Testing competitor discovery with enriched state...")
         
-        competitor_agent = CompetitorDiscoveryAgent()
+        competitor_agent = EnhancedCompetitorDiscoveryAgent()
         
         # Run competitor discovery
         updated_state = await competitor_agent.run(research_state)

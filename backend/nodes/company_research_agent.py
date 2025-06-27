@@ -4,16 +4,12 @@ import os
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from urllib.parse import urljoin, urlparse
-
 from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from tavily import AsyncTavilyClient
-
 from ..classes import ResearchState
 from ..agents.base_agent import BaseAgent
 from ..config import config
-
 logger = logging.getLogger(__name__)
 
 class CompanyResearchAgent(BaseAgent):

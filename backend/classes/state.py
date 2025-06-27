@@ -43,6 +43,21 @@ class ResearchState(InputState):
     categorized_queries: Dict[str, List[str]]  # Queries organized by category from Collector
     total_queries: int  # Total number of queries generated
     query_collection_complete: bool  # Flag indicating query collection is complete
+    sector_trends: List[Dict[str, Any]]  # Industry and sector trend data from SectorTrendAgent
+    
+    # Workflow fields that are actually populated
+    client_trends: NotRequired[List[Dict[str, Any]]]  # Client industry trends from ClientTrendAgent
+    
+    # Competitor discovery fields (used by current workflow)
+    competitor_discovery: NotRequired[Dict[str, Any]]  # Competitor discovery results from EnhancedCompetitorDiscoveryAgent
+    competitors: NotRequired[List[str]]  # Simple competitor list from competitor discovery agents
+    competitor_analysis: NotRequired[Dict[str, Any]]  # Competitor analysis results from CompetitorAnalystAgent
+    
+    # Additional workflow fields that are populated
+    specialized_data: NotRequired[Dict[str, Any]]  # Specialized researcher data
+    reference_titles: NotRequired[List[str]]  # Reference titles from curator
+    reference_info: NotRequired[Dict[str, Any]]  # Reference information from curator
+    
     # Profile-derived fields for easier access
     known_clients: NotRequired[List[str]]  # Notable clients from profile
     use_cases: NotRequired[List[str]]  # Use cases from profile  
@@ -80,6 +95,21 @@ default_research_state = {
     "categorized_queries": {},
     "total_queries": 0,
     "query_collection_complete": False,
+    "sector_trends": [],
+    
+    # Workflow fields that are actually populated
+    "client_trends": [],
+    
+    # Competitor discovery fields (used by current workflow)
+    "competitor_discovery": {},
+    "competitors": [],
+    "competitor_analysis": {},
+    
+    # Additional workflow fields that are populated
+    "specialized_data": {},
+    "reference_titles": [],
+    "reference_info": {},
+    
     # Profile-derived fields
     "known_clients": [],
     "use_cases": [],

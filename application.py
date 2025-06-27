@@ -155,6 +155,7 @@ async def process_research(job_id: str, data: ExecutiveSummaryRequest):
         # Look for the compiled report in multiple possible locations
         report_content = (
             state.get('report') or 
+            (state.get('comprehensive_report_generator') or {}).get('report') or
             (state.get('editor') or {}).get('report') or
             (state.get('executive_report_composer') or {}).get('report')
         )

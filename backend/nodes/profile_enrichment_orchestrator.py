@@ -3,7 +3,7 @@ from typing import Dict, Any
 from ..classes import InputState, ResearchState
 from ..agents.base_agent import BaseAgent
 from .company_info_agent import CompanyInfoAgent
-from .competitor_discovery_agent import CompetitorDiscoveryAgent
+from .competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
 from .competitor_evaluator_agent import CompetitorEvaluatorAgent
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class ProfileEnrichmentOrchestrator(BaseAgent):
     def __init__(self):
         super().__init__(agent_type="profile_enrichment_orchestrator")
         self.company_info_agent = CompanyInfoAgent()
-        self.competitor_discovery_agent = CompetitorDiscoveryAgent()
+        self.competitor_discovery_agent = EnhancedCompetitorDiscoveryAgent()
         self.competitor_evaluator_agent = CompetitorEvaluatorAgent()
         self.max_competitor_iterations = 3
 

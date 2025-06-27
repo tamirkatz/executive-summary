@@ -20,6 +20,10 @@ from .nodes.query_composer import QueryComposer
 from .nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
 from .nodes.executive_report_composer import ExecutiveReportComposer
 from .nodes.competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
+from .nodes.competitor_analyst_agent import CompetitorAnalystAgent
+from .nodes.sector_trend_agent import SectorTrendAgent
+from .nodes.client_trend_agent import ClientTrendAgent
+from .nodes.comprehensive_report_generator import ComprehensiveReportGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +46,12 @@ class Graph:
             'websocket_manager': websocket_manager,
             'job_id': job_id,
             'messages': [
-                SystemMessage(content="Expert researcher starting investigation")
+                SystemMessage(content="Expert researcher starting investigation with profile enrichment, competitor discovery, competitor news analysis, and sector trend analysis")
             ]
         }
 
-        # Initialize nodes with WebSocket manager and job ID
         self._init_nodes()
-        self._build_workflow()
+        self.workflow = None  # Will be built in run()
 
     def _init_nodes(self):
         """Initialize all workflow nodes"""
@@ -59,8 +62,14 @@ class Graph:
         self.enricher = Enricher()
         self.insight_synthesizer = InsightSynthesizer()
         
-        # Add competitor discovery agent as a separate node
+        # Add competitor discovery agent, competitor analyst agent, and trend agents
         self.competitor_discovery_agent = EnhancedCompetitorDiscoveryAgent()
+        self.competitor_analyst_agent = CompetitorAnalystAgent()
+        self.sector_trend_agent = SectorTrendAgent()
+        self.client_trend_agent = ClientTrendAgent()
+        
+        # Add comprehensive report generator
+        self.comprehensive_report_generator = ComprehensiveReportGenerator()
         
         self.profile_enrichment_agent = UserProfileEnrichmentAgent()
             
@@ -81,67 +90,55 @@ class Graph:
         
         # Add nodes with their respective processing functions
         # self.workflow.add_node("grounding", self.ground.run)
-        self.workflow.add_node("competitor_discovery", self.competitor_discovery_agent.run)
         self.workflow.add_node("user_profile_enrichment", self.profile_enrichment_agent.run)
-        self.workflow.add_node("interest_inference", self.interest_inference_agent.run)
-        self.workflow.add_node("research_intent_planning", self.research_intent_planner.run)
-        self.workflow.add_node("query_composition", self.query_composer.run)
-        self.workflow.add_node("collector", self.collector.run)
-        self.workflow.add_node("unified_researcher", self.unified_researcher.run)
+        self.workflow.add_node("competitor_discovery_node", self.competitor_discovery_agent.run)
+        self.workflow.add_node("competitor_analysis_node", self.competitor_analyst_agent.run)
         
-        # Optional specialized researcher node
-        if self.include_specialized_research:
-            self.workflow.add_node("specialized_researcher", self.specialized_researcher.run)
+        # Add trend analysis nodes
+        self.workflow.add_node("sector_trend_analysis", self.sector_trend_agent.run)
+        self.workflow.add_node("client_trend_analysis", self.client_trend_agent.run)
         
-        self.workflow.add_node("curator", self.curator.run)
-        self.workflow.add_node("enricher", self.enricher.run)
-        self.workflow.add_node("insight_synthesizer", self.insight_synthesizer.run)
-        self.workflow.add_node("executive_report_composer", self.executive_report_composer.run)
+        # Add comprehensive report generator
+        self.workflow.add_node("comprehensive_report_generator", self.comprehensive_report_generator.run)
+        
         # Configure workflow edges
         self.workflow.set_entry_point("user_profile_enrichment")
-        self.workflow.set_finish_point("executive_report_composer")
+        self.workflow.set_finish_point("comprehensive_report_generator")
         
         # Connect profile enrichment to competitor discovery
-        self.workflow.add_edge("user_profile_enrichment", "competitor_discovery")
+        self.workflow.add_edge("user_profile_enrichment", "competitor_discovery_node")
         
-        # Connect competitor discovery to interest inference
-        self.workflow.add_edge("competitor_discovery", "interest_inference")
+        # Connect competitor discovery to competitor analysis, then to trend analysis
+        self.workflow.add_edge("competitor_discovery_node", "competitor_analysis_node")
+        self.workflow.add_edge("competitor_analysis_node", "sector_trend_analysis")
+        self.workflow.add_edge("sector_trend_analysis", "client_trend_analysis")
         
-        # Connect interest inference to research intent planning
-        self.workflow.add_edge("interest_inference", "research_intent_planning")
-        
-        # Connect research intent planning to query composition
-        self.workflow.add_edge("research_intent_planning", "query_composition")
-        
-        # Connect query composition to collector (collect queries)
-        self.workflow.add_edge("query_composition", "collector")
-
-        # Connect collector to unified researcher (provide categorized queries)
-        self.workflow.add_edge("collector", "unified_researcher")
-        
-        # Optional specialized researcher connection
-        if self.include_specialized_research:
-            self.workflow.add_edge("unified_researcher", "specialized_researcher")
-            self.workflow.add_edge("specialized_researcher", "curator")
-        else:
-            # Connect unified researcher directly to curator
-            self.workflow.add_edge("unified_researcher", "curator")
-
-        # Connect remaining nodes
-        self.workflow.add_edge("curator", "enricher")
-        self.workflow.add_edge("enricher", "executive_report_composer")
+        # Connect client trend analysis directly to comprehensive report generator
+        self.workflow.add_edge("client_trend_analysis", "comprehensive_report_generator")
 
     async def run(self, thread: Dict[str, Any]) -> AsyncIterator[Dict[str, Any]]:
         """Execute the research workflow"""
-        compiled_graph = self.workflow.compile()
-        
-        async for state in compiled_graph.astream(
-            self.input_state,
-            thread
-        ):
-            if self.websocket_manager and self.job_id:
-                await self._handle_ws_update(state)
-            yield state
+        try:
+            # Build workflow with all agents
+            self._build_workflow()
+            
+            if not self.workflow:
+                raise ValueError("Workflow not properly initialized")
+
+            compiled_graph = self.workflow.compile()
+            
+            # Run the complete workflow
+            async for state in compiled_graph.astream(
+                self.input_state,
+                thread
+            ):
+                if self.websocket_manager and self.job_id:
+                    await self._handle_ws_update(state)
+                
+                yield state
+        except Exception as e:
+            logger.error(f"Error in run method: {e}")
+            raise
 
     async def _handle_ws_update(self, state: Dict[str, Any]):
         """Handle WebSocket updates based on state changes"""

@@ -95,7 +95,7 @@ async def demo_individual_agents():
     print("\n🔧 Individual Agent Demo")
     print("=" * 60)
     
-    from backend.nodes import CompanyInfoAgent, CompetitorDiscoveryAgent, CompetitorEvaluatorAgent
+    from backend.nodes import CompanyInfoAgent, EnhancedCompetitorDiscoveryAgent, CompetitorEvaluatorAgent
     
     # Sample state
     input_state = {
@@ -118,7 +118,7 @@ async def demo_individual_agents():
     
     # Step 2: Competitor Discovery Agent
     print("\n2️⃣ Running CompetitorDiscoveryAgent...")
-    competitor_agent = CompetitorDiscoveryAgent()
+    competitor_agent = EnhancedCompetitorDiscoveryAgent()
     research_state = await competitor_agent.run(research_state)
     
     competitors = research_state.get('company_info', {}).get('competitors', [])
