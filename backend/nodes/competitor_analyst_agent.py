@@ -48,8 +48,8 @@ class CompetitorAnalystAgent(BaseAgent):
         
         self.llm_model = llm_model
         self.temperature = 0.1
-        self.rate_limit = 8  # Tavily concurrent requests
-        self.days_back = 365  # Search news from last year
+        self.rate_limit = 12  # Increased concurrent requests for faster processing
+        self.days_back = 180  # Reduced to 6 months for more focused recent news
         
         if not os.getenv("TAVILY_API_KEY"):
             raise ValueError("TAVILY_API_KEY is not configured")
@@ -64,21 +64,10 @@ class CompetitorAnalystAgent(BaseAgent):
         self.tavily = AsyncTavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
         self.sem = asyncio.Semaphore(self.rate_limit)
         
-        # Trusted sources for competitor intelligence
+        # Focused trusted sources for faster processing
         self.trusted_sources = [
-            "techcrunch.com", "venturebeat.com", "crunchbase.com", "pitchbook.com",
-            "bloomberg.com", "reuters.com", "businesswire.com", "prnewswire.com",
-            "forbes.com", "cnbc.com", "businessinsider.com", "yahoo.com",
-            "theverge.com", "wired.com", "arstechnica.com", "zdnet.com",
-            "sec.gov", "marketwatch.com", "fool.com"
-        ]
-        
-        # Industry blog domains for sector-specific insights
-        self.industry_blogs = [
-            "a16z.com", "future.a16z.com", "sequoiacap.com", "medium.com",
-            "substack.com", "techcrunch.com", "venturebeat.com",
-            "ben-evans.com", "stratechery.com", "nextbigwhat.com",
-            "saastr.com", "firstround.com", "bothsides.substack.com"
+            "techcrunch.com", "venturebeat.com", "crunchbase.com", 
+            "businesswire.com", "prnewswire.com", "reuters.com"
         ]
 
     async def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -114,7 +103,7 @@ class CompetitorAnalystAgent(BaseAgent):
             
             # Analyze each competitor
             all_competitor_news = []
-            for i, competitor in enumerate(competitors[:10]):  # Limit to top 10 competitors
+            for i, competitor in enumerate(competitors[:6]):  # Reduced from 10 to 6 for speed
                 competitor_name = competitor.get("name", "") if isinstance(competitor, dict) else str(competitor)
                 if not competitor_name:
                     continue
@@ -122,7 +111,7 @@ class CompetitorAnalystAgent(BaseAgent):
                 await self.send_status_update(
                     websocket_manager, job_id,
                     status="processing",
-                    message=f"📰 Analyzing competitor {i+1}/{min(len(competitors), 10)}: {competitor_name}",
+                    message=f"📰 Analyzing competitor {i+1}/{min(len(competitors), 6)}: {competitor_name}",
                     result={"step": "Competitor Analysis", "substep": "individual_analysis", "current_competitor": competitor_name}
                 )
                 
@@ -140,12 +129,12 @@ class CompetitorAnalystAgent(BaseAgent):
             state["competitor_analysis"] = {
                 "news_items": [news.model_dump() for news in all_competitor_news],
                 "analysis_date": datetime.now().isoformat(),
-                "competitors_analyzed": min(len(competitors), 10),
+                "competitors_analyzed": min(len(competitors), 6),
                 "total_news_items": len(all_competitor_news)
             }
             
             # Add completion message
-            completion_msg = f"✅ Analyzed {min(len(competitors), 10)} competitors and found {len(all_competitor_news)} relevant news items"
+            completion_msg = f"✅ Analyzed {min(len(competitors), 6)} competitors and found {len(all_competitor_news)} relevant news items"
             messages = state.get('messages', [])
             messages.append(AIMessage(content=completion_msg))
             state['messages'] = messages
@@ -157,7 +146,7 @@ class CompetitorAnalystAgent(BaseAgent):
                 result={
                     "step": "Competitor Analysis",
                     "substep": "complete",
-                    "competitors_analyzed": min(len(competitors), 10),
+                    "competitors_analyzed": min(len(competitors), 6),
                     "news_items_found": len(all_competitor_news),
                     "analysis": state["competitor_analysis"]
                 }
@@ -206,10 +195,10 @@ class CompetitorAnalystAgent(BaseAgent):
         """Crawl competitor website for recent news and announcements."""
         try:
             async with self.sem:
-                # First, try to find the competitor's website
+                # Quick search for competitor website
                 website_search = await self.tavily.search(
                     query=f'"{competitor_name}" official website',
-                    max_results=3
+                    max_results=2
                 )
                 
                 if not website_search.get("results"):
@@ -218,20 +207,17 @@ class CompetitorAnalystAgent(BaseAgent):
                 # Get the first result as likely official website
                 website_url = website_search["results"][0]["url"]
                 
-                # Crawl the website with specific focus on news sections
+                # Fast, focused crawl - minimal depth and breadth
                 crawl_result = await self.tavily.crawl(
                     url=website_url,
-                    max_depth=2,
-                    max_breadth=15,
-                    limit=30,
-                    instructions="""Extract recent news, announcements, press releases, product launches, 
-                    funding announcements, partnership news, and strategic updates. Focus on factual 
-                    information with dates. Prioritize: 1) Product launches and updates, 2) Funding 
-                    and investment news, 3) Partnership announcements, 4) Acquisition news, 
-                    5) Executive changes and hiring.""",
-                    categories=["News", "Press", "Blog", "About", "Investors"],
-                    exclude_paths=["/careers/*", "/support/*", "/legal/*"],
-                    extract_depth="advanced"
+                    max_depth=1,  # Reduced from 2
+                    max_breadth=5,  # Reduced from 15
+                    limit=8,  # Reduced from 30
+                    instructions="""Focus ONLY on: 1) Recent product launches, 2) M&A announcements, 
+                    3) Partnership deals. Extract only factual information with dates from the last 6 months.""",
+                    categories=["News", "Press"],  # Reduced categories
+                    exclude_paths=["/careers/*", "/support/*", "/legal/*", "/blog/*"],
+                    extract_depth="basic"  # Reduced from advanced
                 )
                 
                 if crawl_result and crawl_result.get("results"):
@@ -241,7 +227,7 @@ class CompetitorAnalystAgent(BaseAgent):
                         "content": result.get("content", ""),
                         "category": result.get("category", ""),
                         "reliability": 0.9
-                    } for result in crawl_result["results"] if result.get("content")]
+                    } for result in crawl_result["results"][:5] if result.get("content")]  # Limit results
                 
                 return []
                 
@@ -250,14 +236,12 @@ class CompetitorAnalystAgent(BaseAgent):
             return []
 
     async def _search_competitor_news(self, competitor_name: str) -> List[Dict[str, Any]]:
-        """Search for competitor news across trusted sources."""
+        """Search for competitor news focusing on product launches, M&A, and partnerships."""
+        # Focused queries for only the three key areas
         news_queries = [
-            f'"{competitor_name}" product launch 2024',
-            f'"{competitor_name}" funding round investment 2024',
-            f'"{competitor_name}" partnership announcement 2024',
-            f'"{competitor_name}" acquisition merger 2024',
-            f'"{competitor_name}" strategic announcement 2024',
-            f'"{competitor_name}" executive hire CEO CTO 2024'
+            f'"{competitor_name}" product launch new product 2024',
+            f'"{competitor_name}" acquisition merger M&A 2024',
+            f'"{competitor_name}" partnership deal collaboration 2024'
         ]
         
         news_data = []
@@ -266,8 +250,8 @@ class CompetitorAnalystAgent(BaseAgent):
                 async with self.sem:
                     results = await self.tavily.search(
                         query=query,
-                        search_depth="advanced",
-                        max_results=5,
+                        search_depth="basic",  # Reduced from advanced
+                        max_results=3,  # Reduced from 5
                         include_domains=self.trusted_sources,
                         topic="news",
                         days=self.days_back,
@@ -293,63 +277,51 @@ class CompetitorAnalystAgent(BaseAgent):
         return news_data
 
     async def _search_industry_blogs(self, competitor_name: str, state: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Search industry blogs and thought leadership for competitor insights."""
-        profile = state.get("profile", {})
-        sector = profile.get("sector", "")
-        
-        blog_queries = [
-            f'"{competitor_name}" industry analysis {sector}',
-            f'"{competitor_name}" market position competition',
-            f'"{competitor_name}" startup ecosystem trends',
-            f'site:medium.com "{competitor_name}" strategy',
-            f'site:substack.com "{competitor_name}" analysis'
-        ]
-        
-        blog_data = []
-        for query in blog_queries:
-            try:
-                async with self.sem:
-                    results = await self.tavily.search(
-                        query=query,
-                        search_depth="basic",
-                        max_results=4,
-                        include_domains=self.industry_blogs,
-                        days=self.days_back,
-                        include_answer=True
-                    )
-                    
-                    if results and results.get("results"):
-                        for result in results["results"]:
-                            blog_data.append({
-                                "source": "industry_blog",
-                                "content": result.get("content", ""),
-                                "url": result.get("url", ""),
-                                "title": result.get("title", ""),
-                                "published_date": result.get("published_date", ""),
-                                "query": query,
-                                "reliability": 0.7
-                            })
-                            
-            except Exception as e:
-                self.logger.warning(f"Blog search failed for query '{query}': {e}")
-                continue
-        
-        return blog_data
+        """Quick search of industry sources for competitor insights."""
+        # Single focused query for speed
+        try:
+            async with self.sem:
+                results = await self.tavily.search(
+                    query=f'"{competitor_name}" product launch OR acquisition OR partnership',
+                    search_depth="basic",
+                    max_results=3,  # Reduced significantly
+                    include_domains=["medium.com", "techcrunch.com"],  # Reduced domains
+                    days=self.days_back,
+                    include_answer=True
+                )
+                
+                blog_data = []
+                if results and results.get("results"):
+                    for result in results["results"]:
+                        blog_data.append({
+                            "source": "industry_blog",
+                            "content": result.get("content", ""),
+                            "url": result.get("url", ""),
+                            "title": result.get("title", ""),
+                            "published_date": result.get("published_date", ""),
+                            "reliability": 0.7
+                        })
+                
+                return blog_data
+                        
+        except Exception as e:
+            self.logger.warning(f"Blog search failed for {competitor_name}: {e}")
+            return []
 
     async def _extract_competitor_news(self, competitor_name: str, data_sources: List[Dict[str, Any]]) -> List[CompetitorNews]:
-        """Extract structured competitor news using LLM analysis."""
+        """Extract structured competitor news using focused LLM analysis."""
         if not data_sources:
             return []
         
-        # Prepare content for LLM analysis
+        # Prepare content for LLM analysis - reduced limit for speed
         content_blocks = []
-        for data in data_sources[:20]:  # Limit to prevent token overflow
+        for data in data_sources[:10]:  # Reduced from 20
             content = data.get("content", "")
-            if content and len(content) > 50:  # Filter out very short content
+            if content and len(content) > 50:
                 content_blocks.append({
                     "source": data.get("source", ""),
                     "url": data.get("url", ""),
-                    "content": content[:1000],  # Truncate to prevent token overflow
+                    "content": content[:600],  # Reduced from 1000
                     "title": data.get("title", ""),
                     "date": data.get("published_date", "")
                 })
@@ -357,23 +329,19 @@ class CompetitorAnalystAgent(BaseAgent):
         if not content_blocks:
             return []
         
+        # Shorter, focused prompt
         prompt = f"""
-        You are an expert competitive intelligence analyst. Analyze the provided data sources about "{competitor_name}" 
-        and extract significant news items focusing on:
+        Analyze the data about "{competitor_name}" and extract ONLY significant news in these 3 categories:
+        1. Product launches and major product updates
+        2. M&A activity (acquisitions, mergers, being acquired)
+        3. Strategic partnerships and collaborations
 
-        1. Product launches and major updates
-        2. Funding rounds, investments, and M&A activity
-        3. Strategic partnerships and integrations
-        4. Executive changes and key hires
-        5. Market expansion and business model changes
+        Ignore: routine updates, marketing content, minor announcements, hiring news.
 
-        Focus on factual, strategic information that would be relevant for competitive analysis. 
-        Ignore routine marketing content, minor updates, or promotional material.
-
-        Data sources to analyze:
+        Data sources:
         {json.dumps(content_blocks, indent=2)}
 
-        Extract only significant, factual news items with clear strategic implications.
+        Extract only factual, strategic news items with clear business impact.
         """
         
         try:
