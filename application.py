@@ -102,6 +102,10 @@ class PDFGenerationRequest(BaseModel):
     report_content: str
     company_name: str | None = None
 
+class CompetitorModificationRequest(BaseModel):
+    job_id: str
+    competitors: list
+
 @app.options("/research")
 async def preflight():
     response = JSONResponse(content=None, status_code=200)
@@ -352,6 +356,39 @@ async def get_research_status(job_id: str):
         return job_status[job_id]
     
     raise HTTPException(status_code=404, detail="Research job not found")
+
+@app.post("/research/competitors/modify")
+async def modify_competitors(data: CompetitorModificationRequest):
+    """Handle competitor modifications."""
+    try:
+        job_id = data.job_id
+        modified_competitors = data.competitors
+        
+        logger.info(f"Received competitor modifications for job {job_id}: {len(modified_competitors)} competitors")
+        
+        # Store modified competitors for this job (in production, use database)
+        job_status[job_id]["modified_competitors"] = modified_competitors
+        
+        # Send status update confirming the review is complete
+        await manager.send_status_update(
+            job_id=job_id,
+            status="competitor_review_completed",
+            message=f"Competitor review completed with {len(modified_competitors)} competitors",
+            result={
+                "competitors": modified_competitors,
+                "step": "Competitor Analysis"
+            }
+        )
+        
+        return {
+            "status": "success",
+            "message": "Competitor modifications saved",
+            "competitor_count": len(modified_competitors)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error modifying competitors for job {job_id}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=config.PORT)

@@ -48,7 +48,7 @@ class TrendArray(BaseModel):
 
 class SectorTrendAgent(BaseAgent):
     """
-    Enhanced Sector Trend Agent v3 - Dynamic, company-agnostic seed generation
+    Sector Trend Agent - Dynamic, company-agnostic trend discovery
     
     Features:
     - Dynamic seed generation via GPT-4o structured output
@@ -186,7 +186,7 @@ class SectorTrendAgent(BaseAgent):
     # --------------------------------- PHASE 1: DYNAMIC SEED GENERATION ---------------------------------
 
     async def _generate_sector_seeds(self, profile: Dict[str, Any]) -> List[str]:
-        """LLM proposes up to 5 specialized keywords for trend hunting with focus on cutting-edge trends."""
+        """LLM proposes up to 5 specialized keywords for trend hunting based on company profile."""
         
         context = {
             "sector": profile.get("sector", ""),
@@ -197,12 +197,11 @@ class SectorTrendAgent(BaseAgent):
         }
         
         prompt = (
-            "You are an industry analyst specializing in cutting-edge technology trends. Given the company profile below, identify up to 5 *specialized* "
+            "You are an industry analyst. Given the company profile below, identify up to 5 *specialized* "
             "keywords that capture its micro-domain, relevant sub-technologies, or adjacent tooling.\n"
-            "Avoid generic buzzwords (e.g., 'AI', 'technology', 'software').\n"
-            "Focus on specific technologies, methodologies, or market segments.\n"
-            "PRIORITIZE cutting-edge trends like: agentic commerce, AI automation, API ecosystems, agent frameworks, autonomous systems, "
-            "conversational commerce, headless architecture, real-time payments, cross-border fintech, embedded finance.\n"
+            
+            "Focus on specific technologies, methodologies, or market segments relevant to this company's domain.\n"
+            
             f"PROFILE: {json.dumps(context)}"
         )
         
@@ -224,38 +223,29 @@ class SectorTrendAgent(BaseAgent):
     # --------------------------------- PHASE 2: QUERY GENERATION ---------------------------------
 
     def _generate_queries(self, profile: Dict[str, Any], seeds: List[str]) -> List[str]:
-        """Generate targeted trend queries using sector and dynamic seeds with focus on cutting-edge developments."""
+        """Generate targeted trend queries using sector and dynamic seeds."""
         
         sector = profile.get("sector", "technology")
+        current_year = datetime.now().year
         
-        # Enhanced base sector queries with cutting-edge focus
+        # Base sector queries
         base_queries = [
-            f"{sector} agentic commerce trends 2025",
-            f"{sector} AI automation market 2025",
-            f"{sector} API economy growth 2025",
-            f"Stripe MCP merchant onboarding 2025",
-            f"{sector} agent frameworks adoption 2025"
+            f"{sector} industry trends {current_year}",
+            f"{sector} market developments {current_year}",
+            f"{sector} innovation {current_year}"
         ]
         
-        # Dynamic seed-based queries with innovation focus
+        # Dynamic seed-based queries
         seed_queries = []
         for seed in seeds:
             seed_queries.extend([
-                f"{seed} autonomous systems 2025",
-                f"{seed} conversational commerce 2025",
-                f"{seed} API-first strategy 2025"
+                f"{seed} trends {current_year}",
+                f"{seed} developments {current_year}",
+                f"{seed} market {current_year}"
             ])
         
-        # Add cutting-edge technology queries
-        cutting_edge_queries = [
-            "agentic commerce platform developments 2025",
-            "AI-driven payment automation 2025",
-            "autonomous merchant systems 2025",
-            "conversational AI commerce 2025"
-        ]
-        
-        all_queries = base_queries + seed_queries + cutting_edge_queries
-        return all_queries[:15]  # Increased limit for more comprehensive coverage
+        all_queries = base_queries + seed_queries
+        return all_queries[:12]  # Limit for manageable coverage
 
     # --------------------------------- PHASE 3: CONCURRENT SEARCH ---------------------------------
 

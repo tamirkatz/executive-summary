@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
@@ -176,6 +177,8 @@ class EnhancedCompetitorDiscoveryAgent(BaseAgent):
         """Phase 1: Generate exactly 25 search queries for finding competitors."""
         
         core_products_text = ", ".join(core_products) if core_products else "N/A"
+        current_year = datetime.now().year
+        prev_year = current_year - 1
         
         prompt = f"""You are a competitive intelligence analyst. Generate exactly 20 search queries to find competitors for the following company.
 
@@ -183,9 +186,7 @@ Company: {company}
 Description: {description}
 Core Products: {core_products_text}
 
-Generate search queries that will help discover the company main competitors
-
-
+Generate search queries that will help discover the company's main competitors. IMPORTANT: Each query must include either '{current_year}' or '{prev_year}' or words like 'recent', 'latest' to ensure only the most up-to-date and relevant competitors are found. Example: 'top fintech competitors {current_year}', 'latest payment processing competitors', etc.
 
 Return exactly 20 queries."""
 
@@ -296,6 +297,7 @@ Instructions:
 7. Exclude generic terms, technologies, or non-company entities
 8. Focus on actual company names that can be researched further
 
+
 Return a list of competitor company names."""
 
         llm_with_schema = self.llm.with_structured_output(CompetitorNames)
@@ -357,6 +359,30 @@ Return a list of competitor company names."""
         
         # Extract just the names for backward compatibility
         validated_competitors = [comp.name for comp in top_competitors]
+        
+        # --- POST-FILTER: Only keep competitors with recent news ---
+        current_year = datetime.now().year
+        prev_year = current_year - 1
+        filtered_competitors = []
+        for competitor in validated_competitors:
+            try:
+                # Search for recent news
+                query = f'"{competitor}" news {prev_year} OR {current_year}'
+                result = await self.tavily.search(query=query, max_results=3)
+                has_recent = False
+                if result and result.get("results"):
+                    for item in result["results"]:
+                        date = item.get("published_date") or item.get("date")
+                        if date and (str(prev_year) in date or str(current_year) in date):
+                            has_recent = True
+                            break
+                if has_recent:
+                    filtered_competitors.append(competitor)
+            except Exception as e:
+                self.logger.warning(f"Post-filter failed for {competitor}: {e}")
+                continue
+        if filtered_competitors:
+            validated_competitors = filtered_competitors
         
         filtered_count = len(competitor_names) - len(validated_competitors)
         

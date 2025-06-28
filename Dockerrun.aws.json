@@ -1,0 +1,29 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "company-research-agent",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 8000,
+      "HostPort": 80
+    }
+  ],
+  "Volumes": [
+    {
+      "HostDirectory": "/var/app/reports",
+      "ContainerDirectory": "/app/reports"
+    },
+    {
+      "HostDirectory": "/var/app/pdfs",
+      "ContainerDirectory": "/app/pdfs"
+    },
+    {
+      "HostDirectory": "/var/app/logs",
+      "ContainerDirectory": "/app/logs"
+    }
+  ],
+  "Logging": "/var/log/company-research-agent",
+  "Command": "python -m uvicorn application:app --host 0.0.0.0 --port 8000"
+}

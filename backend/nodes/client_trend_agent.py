@@ -323,15 +323,16 @@ class ClientTrendAgent(BaseAgent):
         known_clients = profile.get("known_clients", [])[:5]
         partners = profile.get("partners", [])[:5] 
         company_sector = profile.get("sector", "")
+        current_year = datetime.now().year
         
         for industry in client_industries:
             # DISRUPTIVE TECHNOLOGY TRENDS
             disruptive_queries = [
-                f"{industry} AI disruption 2025 market transformation",
+                f"{industry} AI disruption {current_year} market transformation",
                 f"{industry} emerging technologies disrupting business models",
                 f"{industry} automation replacing traditional processes",
                 f"{industry} blockchain cryptocurrency adoption trends",
-                f"{industry} regulatory changes disrupting markets 2025"
+                f"{industry} regulatory changes disrupting markets {current_year}"
             ]
             
             # FUTURE-SHAPING BUSINESS MODEL SHIFTS
@@ -339,7 +340,7 @@ class ClientTrendAgent(BaseAgent):
                 f"{industry} subscription economy transformation trends",
                 f"{industry} platform business models disrupting incumbents",
                 f"{industry} direct-to-consumer DTC revolution trends",
-                f"{industry} marketplace economy disruption 2025",
+                f"{industry} marketplace economy disruption {current_year}",
                 f"{industry} API economy platform strategies"
             ]
             
@@ -367,7 +368,7 @@ class ClientTrendAgent(BaseAgent):
             for client in known_clients[:3]:
                 client_queries = [
                     f"{client} industry transformation trends driving change",
-                    f"{client} market disruption challenges 2025"
+                    f"{client} market disruption challenges {current_year}"
                 ]
                 queries.extend(client_queries)
         

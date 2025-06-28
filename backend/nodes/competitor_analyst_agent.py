@@ -238,10 +238,11 @@ class CompetitorAnalystAgent(BaseAgent):
     async def _search_competitor_news(self, competitor_name: str) -> List[Dict[str, Any]]:
         """Search for competitor news focusing on product launches, M&A, and partnerships."""
         # Focused queries for only the three key areas
+        current_year = datetime.now().year
         news_queries = [
-            f'"{competitor_name}" product launch new product 2024',
-            f'"{competitor_name}" acquisition merger M&A 2024',
-            f'"{competitor_name}" partnership deal collaboration 2024'
+            f'"{competitor_name}" product launch new product {current_year}',
+            f'"{competitor_name}" acquisition merger M&A {current_year}',
+            f'"{competitor_name}" partnership deal collaboration {current_year}'
         ]
         
         news_data = []
