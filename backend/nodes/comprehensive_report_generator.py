@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 class ComprehensiveReportGenerator(BaseAgent):
     """
-    Agent that generates a comprehensive report from competitor analysis and trend data.
-    Creates summaries for competitor news and trend analysis with company relevance.
+    Enhanced agent that generates executive-focused strategic intelligence reports.
+    Emphasizes competitive landscape, market data, and cutting-edge industry trends.
     """
     
     def __init__(self):
@@ -24,7 +24,7 @@ class ComprehensiveReportGenerator(BaseAgent):
         
     async def run(self, state: ResearchState) -> ResearchState:
         """
-        Generate comprehensive report from collected data
+        Generate comprehensive executive intelligence report
         """
         self.log_agent_start(state)
         company = state.get('company', 'the company')
@@ -35,8 +35,8 @@ class ComprehensiveReportGenerator(BaseAgent):
             await self.send_status_update(
                 websocket_manager, job_id,
                 status="processing",
-                message="📊 Starting comprehensive report generation",
-                result={"step": "Comprehensive Report Generation", "substep": "initialization"}
+                message="📊 Starting enhanced strategic intelligence report generation",
+                result={"step": "Enhanced Strategic Intelligence", "substep": "initialization"}
             )
             
             # Get all available data from state
@@ -50,45 +50,21 @@ class ComprehensiveReportGenerator(BaseAgent):
             await self.send_status_update(
                 websocket_manager, job_id,
                 status="processing",
-                message="🔍 Analyzing competitor intelligence data",
-                result={"step": "Comprehensive Report Generation", "substep": "competitor_analysis"}
+                message="🎯 Analyzing competitive intelligence and market dynamics",
+                result={"step": "Enhanced Strategic Intelligence", "substep": "competitive_analysis"}
             )
             
-            # Generate competitor news analysis
-            competitor_report = await self._generate_competitor_news_analysis(
-                company, user_role, competitor_discovery, competitor_analysis, competitors, profile
-            )
-            
-            await self.send_status_update(
-                websocket_manager, job_id,
-                status="processing",
-                message="📈 Analyzing market and sector trends",
-                result={"step": "Comprehensive Report Generation", "substep": "trend_analysis"}
-            )
-            
-            # Generate trend analysis report
-            trend_report = await self._generate_trend_analysis_report(
-                company, user_role, sector_trends, client_trends, profile
-            )
-            
-            await self.send_status_update(
-                websocket_manager, job_id,
-                status="processing",
-                message="📋 Generating final strategic report",
-                result={"step": "Comprehensive Report Generation", "substep": "final_report"}
-            )
-            
-            # Combine into final report
-            final_report = await self._generate_final_report(
-                company, user_role, competitor_report, trend_report, profile
+            # Generate enhanced strategic intelligence report
+            final_report = await self._generate_enhanced_strategic_report(
+                company, user_role, competitor_discovery, competitor_analysis, 
+                competitors, sector_trends, client_trends, profile
             )
             
             # Update state with the comprehensive report
             state['report'] = final_report
-            state['competitor_briefing'] = competitor_report
             
             # Add completion message to messages
-            completion_msg = f"✅ Generated comprehensive strategic intelligence report for {company}"
+            completion_msg = f"✅ Generated enhanced strategic intelligence report for {company}"
             messages = state.get('messages', [])
             messages.append(AIMessage(content=completion_msg))
             state['messages'] = messages
@@ -98,7 +74,7 @@ class ComprehensiveReportGenerator(BaseAgent):
                 status="completed",
                 message=completion_msg,
                 result={
-                    "step": "Comprehensive Report Generation",
+                    "step": "Enhanced Strategic Intelligence",
                     "substep": "complete",
                     "report": final_report
                 }
@@ -108,268 +84,116 @@ class ComprehensiveReportGenerator(BaseAgent):
             return state
             
         except Exception as e:
-            error_msg = f"❌ Error in comprehensive report generation: {str(e)}"
+            error_msg = f"❌ Enhanced strategic intelligence generation failed: {str(e)}"
             self.logger.error(error_msg)
-            await self.send_error_update(
+            await self.send_status_update(
                 websocket_manager, job_id,
-                error_msg=error_msg,
-                step="Comprehensive Report Generation"
+                status="error",
+                message=error_msg,
+                result={"step": "Enhanced Strategic Intelligence", "error": str(e)}
             )
             return state
-    
-    async def _generate_competitor_news_analysis(self, company: str, user_role: str, 
-                                               competitor_discovery: Dict, competitor_analysis: Dict, 
-                                               competitors: List, profile: Dict) -> str:
-        """Generate competitor news analysis with summaries, value, and comparisons"""
+
+    async def _generate_enhanced_strategic_report(self, company: str, user_role: str,
+                                                competitor_discovery: Dict, competitor_analysis: Dict,
+                                                competitors: List, sector_trends: List, 
+                                                client_trends: List, profile: Dict) -> str:
+        """Generate enhanced strategic intelligence report with emphasis on competitive landscape and industry data"""
         
-        # Extract company context from profile
-        company_context = ""
-        if profile:
-            core_products = profile.get('core_products', [])
-            use_cases = profile.get('use_cases', [])
-            customer_segments = profile.get('customer_segments', [])
-            
-            if core_products:
-                company_context += f"\n{company} Core Products: {', '.join(core_products)}"
-            if use_cases:
-                company_context += f"\n{company} Use Cases: {', '.join(use_cases)}"
-            if customer_segments:
-                company_context += f"\n{company} Customer Segments: {', '.join(customer_segments)}"
+        # Extract company context
+        company_context = self._extract_company_context(profile, company)
+        
+        # Prepare comprehensive data
+        competitive_data = self._prepare_competitive_intelligence(
+            competitor_discovery, competitor_analysis, competitors
+        )
+        
+        market_data = self._prepare_market_intelligence(sector_trends, client_trends)
         
         system_prompt = f"""
-        You are an expert business analyst specializing in competitive intelligence.
+        You are an elite strategic intelligence analyst creating an executive briefing for C-suite leadership.
+        Your report must be data-driven, fact-heavy, and focused on competitive dynamics and market realities.
         
-        Your task is to analyze competitor news and developments for {company}.
+        CRITICAL REQUIREMENTS:
+        1. COMPETITIVE LANDSCAPE must be the PRIMARY and LONGEST section
+        2. Focus on SPECIFIC competitor moves, not generic insights
+        3. Include QUANTITATIVE data wherever possible (market sizes, growth rates, valuations)
+        4. Highlight cutting-edge trends: agentic commerce, AI-driven automation, API ecosystems
+        5. NO generic strategic recommendations - keep them minimal and data-backed
+        6. Lead with FACTS and industry developments, not analysis
         
         Company Context: {company_context}
         
-        For each significant piece of competitor news or development:
-        1. Create a SHORT SUMMARY (2-3 sentences max)
-        2. Identify the VALUE/IMPACT for the industry
-        3. Compare it to what exists at {company} or suggest implications for {company}
+        Structure the report as:
         
-        Focus on the most INTERESTING and RELEVANT news that could impact {company}'s strategy.
-        
-        Structure your response as:
-        ## Competitor News Analysis
-        
-        ### [Competitor Name]
-        **News/Development:** [Brief title]
-        **Summary:** [2-3 sentence summary]
-        **Value/Impact:** [What this means for the industry]
-        **Comparison to {company}:** [How this relates to or differs from {company}'s approach]
-        
-        Only include the most significant and actionable insights.
-        """
-        
-        # Prepare comprehensive competitor data for analysis
-        competitor_info = ""
-        
-        # Add discovered competitors
-        if competitor_discovery:
-            for category in ["direct", "indirect", "emerging"]:
-                cat_competitors = competitor_discovery.get(category, [])
-                if cat_competitors:
-                    competitor_info += f"\n{category.title()} Competitors: "
-                    competitor_info += ", ".join([comp.get("name", str(comp)) if isinstance(comp, dict) else str(comp) for comp in cat_competitors[:5]])
-                    competitor_info += "\n"
-        
-        # Add basic competitor list
-        if competitors:
-            competitor_names = [comp.get("name", str(comp)) if isinstance(comp, dict) else str(comp) for comp in competitors[:10]]
-            competitor_info += f"\nKey Competitors: {', '.join(competitor_names)}\n"
-        
-        # Add detailed competitor analysis data (news items, etc.)
-        if competitor_analysis:
-            news_items = competitor_analysis.get('news_items', [])
-            if news_items:
-                competitor_info += f"\nCompetitor News Analysis ({len(news_items)} items):\n"
-                for item in news_items[:10]:  # Limit to top 10 news items
-                    competitor_info += f"- {item.get('competitor', 'Unknown')}: {item.get('title', 'No title')} - {item.get('summary', 'No summary')[:200]}\n"
-        
-        if not competitor_info.strip():
-            competitor_info = "No specific competitor data available for analysis."
-        
-        user_prompt = f"""
-        Analyze the following competitor information for {company}:
-        
-        {competitor_info}
-        
-        User role context: {user_role}
-        
-        Generate a focused competitor news analysis following the specified format.
-        """
-        
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
-        ]
-        
-        response = await self.llm.ainvoke(messages)
-        return response.content
-    
-    async def _generate_trend_analysis_report(self, company: str, user_role: str,
-                                            sector_trends: List, client_trends: List, profile: Dict) -> str:
-        """Generate trend analysis report with descriptions, summaries, and company relevance"""
-        
-        # Extract company context from profile
-        company_context = ""
-        if profile:
-            core_products = profile.get('core_products', [])
-            use_cases = profile.get('use_cases', [])
-            customer_segments = profile.get('customer_segments', [])
-            known_clients = profile.get('known_clients', [])
-            
-            if core_products:
-                company_context += f"\n{company} Core Products: {', '.join(core_products)}"
-            if use_cases:
-                company_context += f"\n{company} Use Cases: {', '.join(use_cases)}"
-            if customer_segments:
-                company_context += f"\n{company} Customer Segments: {', '.join(customer_segments)}"
-            if known_clients:
-                company_context += f"\n{company} Known Clients: {', '.join(known_clients[:5])}"
-        
-        system_prompt = f"""
-        You are an expert market research analyst specializing in trend analysis.
-        
-        Your task is to analyze sector and client trends for {company}.
-        
-        Company Context: {company_context}
-        
-        For each trend:
-        1. Provide a clear DESCRIPTION of the trend
-        2. Create a SHORT SUMMARY of its current state and trajectory
-        3. Explain HOW IT RELATES to {company} specifically given their products, use cases, and customer segments
-        
-        Structure your response as:
-        ## Trend Analysis Report
-        
-        ### Sector Trends
-        **Trend:** [Trend name/title]
-        **Description:** [What this trend is about]
-        **Summary:** [Current state and trajectory in 2-3 sentences]
-        **Company Relevance:** [How this specifically impacts or relates to {company}]
-        
-        ### Client/Market Trends
-        **Trend:** [Trend name/title]
-        **Description:** [What this trend is about]
-        **Summary:** [Current state and trajectory in 2-3 sentences]
-        **Company Relevance:** [How this specifically impacts or relates to {company}]
-        
-        Focus on actionable insights and clear connections to {company}'s business.
-        """
-        
-        # Prepare comprehensive trend data for analysis
-        trend_info = ""
-        
-        if sector_trends:
-            trend_info += "SECTOR TRENDS:\n"
-            for i, trend in enumerate(sector_trends[:8], 1):  # Include more trends
-                if isinstance(trend, dict):
-                    trend_title = trend.get('title', trend.get('name', f'Trend {i}'))
-                    trend_description = trend.get('description', trend.get('summary', str(trend)[:300]))
-                    trend_info += f"{i}. {trend_title}: {trend_description}\n"
-                else:
-                    trend_info += f"{i}. {str(trend)[:400]}\n"
-            trend_info += "\n"
-        
-        if client_trends:
-            trend_info += "CLIENT/MARKET TRENDS:\n"
-            for i, trend in enumerate(client_trends[:8], 1):  # Include more trends
-                if isinstance(trend, dict):
-                    trend_title = trend.get('title', trend.get('name', f'Client Trend {i}'))
-                    trend_description = trend.get('description', trend.get('summary', str(trend)[:300]))
-                    trend_info += f"{i}. {trend_title}: {trend_description}\n"
-                else:
-                    trend_info += f"{i}. {str(trend)[:400]}\n"
-            trend_info += "\n"
-        
-        if not trend_info.strip():
-            trend_info = "No specific trend data available for analysis."
-        
-        user_prompt = f"""
-        Analyze the following trend information for {company}:
-        
-        {trend_info}
-        
-        User role context: {user_role}
-        
-        Generate a focused trend analysis report following the specified format.
-        Focus on trends that are most relevant to {company}'s business model and customer base.
-        """
-        
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
-        ]
-        
-        response = await self.llm.ainvoke(messages)
-        return response.content
-    
-    async def _generate_final_report(self, company: str, user_role: str,
-                                   competitor_report: str, trend_report: str, profile: Dict) -> str:
-        """Generate final comprehensive report combining all analyses"""
-        
-        # Extract company context from profile
-        company_context = ""
-        if profile:
-            core_products = profile.get('core_products', [])
-            use_cases = profile.get('use_cases', [])
-            customer_segments = profile.get('customer_segments', [])
-            known_clients = profile.get('known_clients', [])
-            
-            company_context += f"\n{company} Business Profile:"
-            if core_products:
-                company_context += f"\n- Core Products: {', '.join(core_products)}"
-            if use_cases:
-                company_context += f"\n- Use Cases: {', '.join(use_cases)}"
-            if customer_segments:
-                company_context += f"\n- Customer Segments: {', '.join(customer_segments)}"
-            if known_clients:
-                company_context += f"\n- Notable Clients: {', '.join(known_clients[:5])}"
-        
-        system_prompt = f"""
-        You are an executive business consultant creating a comprehensive strategic intelligence report.
-        
-        Combine the competitor analysis and trend analysis into a cohesive executive summary
-        that provides actionable insights for {company}.
-        
-        Company Context: {company_context}
-        
-        Structure the final report as:
         # Strategic Intelligence Report for {company}
         
         ## Executive Summary
-        [Key takeaways and strategic implications in 3-4 sentences that tie together competitive landscape and market trends]
+        [3-4 sentences highlighting the most critical competitive developments and market dynamics affecting {company}. Focus on immediate competitive threats and market opportunities.]
         
         ## Competitive Landscape Analysis
-        [Include the competitor analysis with focus on the most strategic insights]
+        [THIS IS THE MAIN SECTION - 60% of the report]
         
-        ## Market & Sector Trends Analysis
-        [Include the trend analysis with emphasis on business impact]
+        ### Direct Competitors - Strategic Moves
+        [For each major competitor, provide:]
+        - **Recent Product Launches:** [Specific products/features with dates and market impact]
+        - **Funding/Valuation Updates:** [Specific amounts, dates, investors]
+        - **Strategic Partnerships:** [New alliances, integrations, M&A activity]
+        - **Technology Investments:** [AI capabilities, API developments, infrastructure upgrades]
+        - **Market Share Data:** [When available, specific market position changes]
         
-        ## Strategic Recommendations
-        [5-7 specific, actionable bullet points that {company} should consider based on the competitive and trend analysis]
+        ### Emerging Competitive Threats
+        [New entrants, disruptive technologies, non-traditional competitors]
         
-        ## Key Opportunities & Risks
-        [Highlight 2-3 key opportunities and 2-3 key risks identified from the analysis]
+        ### Industry Consolidation Activity
+        [M&A deals, strategic acquisitions, market concentration trends]
         
-        Keep it executive-ready: strategic, actionable, and focused on business impact.
+        ## Market & Technology Dynamics
+        
+        ### Agentic Commerce & AI Automation
+        [Specific developments in AI-driven commerce, autonomous agents, workflow automation]
+        
+        ### API Economy & Integration Trends
+        [Platform integrations, API-first strategies, ecosystem developments like Stripe's MCP]
+        
+        ### Payment Technology Evolution
+        [Specific innovations in payment processing, fintech developments, regulatory changes]
+        
+        ### Market Size & Growth Data
+        [Specific market metrics, growth projections, segment analysis]
+        
+        ## Industry Intelligence Highlights
+        [5-8 specific industry developments with sources and dates]
+        
+        ## Key Market Risks
+        [2-3 specific, immediate risks with factual basis]
+        
+        Make it executive-ready: dense with facts, light on fluff, heavy on competitive intelligence.
         """
         
         user_prompt = f"""
-        Create a final comprehensive strategic intelligence report for {company} by combining these analyses:
+        Create an enhanced strategic intelligence report for {company} using this data:
         
-        COMPETITOR ANALYSIS:
-        {competitor_report}
+        COMPETITIVE INTELLIGENCE:
+        {competitive_data}
         
-        TREND ANALYSIS:
-        {trend_report}
+        MARKET INTELLIGENCE:
+        {market_data}
         
-        User role context: {user_role}
+        User role: {user_role}
         
-        Generate an executive-ready strategic intelligence report that provides clear, actionable insights 
-        for {company}'s leadership team. Focus on the most interesting and strategic findings.
+        Focus on:
+        1. Specific competitor movements and strategic decisions
+        2. Quantitative market data and industry metrics
+        3. Cutting-edge technology trends (agentic commerce, AI automation, API ecosystems)
+        4. Factual industry developments over generic insights
+        5. Minimal strategic recommendations - let the data speak
+        
+        Make this report 10x more interesting and complete for executives by focusing on:
+        - Hard facts and specific competitor intelligence
+        - Industry data and market metrics
+        - Technological innovations and platform developments
+        - Specific dates, amounts, and quantifiable developments
         """
         
         messages = [
@@ -378,4 +202,122 @@ class ComprehensiveReportGenerator(BaseAgent):
         ]
         
         response = await self.llm.ainvoke(messages)
-        return response.content 
+        return response.content
+
+    def _extract_company_context(self, profile: Dict, company: str) -> str:
+        """Extract and format company context"""
+        context_parts = [f"{company} Business Profile:"]
+        
+        if profile:
+            if profile.get('core_products'):
+                context_parts.append(f"- Core Products: {', '.join(profile['core_products'])}")
+            if profile.get('use_cases'):
+                context_parts.append(f"- Use Cases: {', '.join(profile['use_cases'])}")
+            if profile.get('customer_segments'):
+                context_parts.append(f"- Customer Segments: {', '.join(profile['customer_segments'])}")
+            if profile.get('known_clients'):
+                context_parts.append(f"- Notable Clients: {', '.join(profile['known_clients'][:5])}")
+            if profile.get('industry'):
+                context_parts.append(f"- Industry: {profile['industry']}")
+        
+        return "\n".join(context_parts)
+
+    def _prepare_competitive_intelligence(self, competitor_discovery: Dict, 
+                                        competitor_analysis: Dict, competitors: List) -> str:
+        """Prepare comprehensive competitive intelligence data"""
+        intel_parts = []
+        
+        # Discovered competitors by category
+        if competitor_discovery:
+            intel_parts.append("DISCOVERED COMPETITORS BY CATEGORY:")
+            for category in ["direct", "indirect", "emerging"]:
+                cat_competitors = competitor_discovery.get(category, [])
+                if cat_competitors:
+                    intel_parts.append(f"\n{category.title()} Competitors:")
+                    for comp in cat_competitors[:8]:
+                        if isinstance(comp, dict):
+                            name = comp.get("name", "Unknown")
+                            description = comp.get("description", "")
+                            intel_parts.append(f"  • {name}: {description}")
+                        else:
+                            intel_parts.append(f"  • {comp}")
+        
+        # Competitor news analysis
+        if competitor_analysis and competitor_analysis.get('news_items'):
+            intel_parts.append("\n\nCOMPETITOR NEWS & DEVELOPMENTS:")
+            news_items = competitor_analysis['news_items']
+            
+            # Group by category
+            categories = {}
+            for item in news_items:
+                cat = item.get('category', 'other')
+                if cat not in categories:
+                    categories[cat] = []
+                categories[cat].append(item)
+            
+            for category, items in categories.items():
+                intel_parts.append(f"\n{category.replace('_', ' ').title()}:")
+                for item in items[:5]:  # Top 5 per category
+                    competitor = item.get('competitor', 'Unknown')
+                    title = item.get('title', 'No title')
+                    summary = item.get('summary', 'No summary')
+                    date = item.get('date', 'Unknown date')
+                    impact = item.get('impact', 'No impact assessment')
+                    intel_parts.append(f"  • {competitor}: {title} ({date})")
+                    intel_parts.append(f"    Summary: {summary}")
+                    intel_parts.append(f"    Impact: {impact}")
+        
+        # Basic competitor list
+        if competitors:
+            intel_parts.append("\n\nADDITIONAL COMPETITORS:")
+            for comp in competitors[:10]:
+                if isinstance(comp, dict):
+                    intel_parts.append(f"  • {comp.get('name', str(comp))}")
+                else:
+                    intel_parts.append(f"  • {comp}")
+        
+        return "\n".join(intel_parts) if intel_parts else "No specific competitive intelligence available."
+
+    def _prepare_market_intelligence(self, sector_trends: List, client_trends: List) -> str:
+        """Prepare comprehensive market intelligence data"""
+        intel_parts = []
+        
+        if sector_trends:
+            intel_parts.append("SECTOR TRENDS & MARKET DYNAMICS:")
+            for i, trend in enumerate(sector_trends[:10], 1):
+                if isinstance(trend, dict):
+                    trend_name = trend.get('trend', trend.get('title', f'Sector Trend {i}'))
+                    evidence = trend.get('evidence', '')
+                    impact = trend.get('impact', '')
+                    confidence = trend.get('confidence', '')
+                    date = trend.get('date', '')
+                    
+                    intel_parts.append(f"\n{i}. {trend_name}")
+                    if evidence:
+                        intel_parts.append(f"   Evidence: {evidence}")
+                    if impact:
+                        intel_parts.append(f"   Impact: {impact}")
+                    if confidence:
+                        intel_parts.append(f"   Confidence: {confidence}")
+                    if date:
+                        intel_parts.append(f"   Date: {date}")
+                else:
+                    intel_parts.append(f"{i}. {str(trend)[:500]}")
+        
+        if client_trends:
+            intel_parts.append("\n\nCLIENT/MARKET TRENDS:")
+            for i, trend in enumerate(client_trends[:10], 1):
+                if isinstance(trend, dict):
+                    trend_name = trend.get('trend', trend.get('title', f'Client Trend {i}'))
+                    evidence = trend.get('evidence', '')
+                    impact = trend.get('impact', '')
+                    
+                    intel_parts.append(f"\n{i}. {trend_name}")
+                    if evidence:
+                        intel_parts.append(f"   Evidence: {evidence}")
+                    if impact:
+                        intel_parts.append(f"   Impact: {impact}")
+                else:
+                    intel_parts.append(f"{i}. {str(trend)[:500]}")
+        
+        return "\n".join(intel_parts) if intel_parts else "No specific market intelligence available." 
