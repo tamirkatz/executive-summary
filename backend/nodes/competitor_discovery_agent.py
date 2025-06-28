@@ -29,6 +29,14 @@ class CompetitorValidation(BaseModel):
     is_competitor: bool = Field(description="Whether this company is actually a competitor")
     reasoning: str = Field(description="Brief explanation of why it is or isn't a competitor")
 
+class ScoredCompetitor(BaseModel):
+    name: str = Field(description="Competitor company name")
+    score: float = Field(description="Accuracy score from 0-10, where 10 is the most accurate competitor", ge=0, le=10)
+    reasoning: str = Field(description="Brief explanation of the score and why this competitor is relevant")
+
+class ScoredCompetitors(BaseModel):
+    competitors: List[ScoredCompetitor] = Field(description="List of competitors with accuracy scores")
+
 class ValidatedCompetitors(BaseModel):
     competitors: List[str] = Field(description="List of validated competitor company names")
 
@@ -106,12 +114,12 @@ class EnhancedCompetitorDiscoveryAgent(BaseAgent):
             
             competitor_names = await self._extract_competitor_names(company, company_description, core_products, combined_results)
             
-            # Phase 4: Validate competitors with LLM using descriptions
+            # Phase 4: Score and rank competitors with LLM using descriptions
             await self.send_status_update(
                 websocket_manager, job_id,
                 status="processing",
-                message=f"🔍 Validating {len(competitor_names)} competitors with descriptions",
-                result={"step": "Competitor Discovery", "substep": "validation"}
+                message=f"🏆 Scoring and ranking {len(competitor_names)} competitors (selecting top 8)",
+                result={"step": "Competitor Discovery", "substep": "scoring_ranking"}
             )
             
             validated_competitors = await self._validate_competitors_with_llm(
@@ -124,13 +132,14 @@ class EnhancedCompetitorDiscoveryAgent(BaseAgent):
             state["competitor_discovery"] = {
                 "general_queries": search_queries,
                 "initial_competitors_found": len(competitor_names),
-                "validated_competitors_found": len(validated_competitors),
+                "final_competitors_selected": len(validated_competitors),
                 "competitors": validated_competitors,
-                "validation_removed": len(competitor_names) - len(validated_competitors)
+                "max_competitors_limit": 8,
+                "filtered_out": len(competitor_names) - len(validated_competitors)
             }
             
             # Add completion message
-            completion_msg = f"✅ Discovered and validated {len(validated_competitors)} competitors for {company} (filtered from {len(competitor_names)} initial candidates)"
+            completion_msg = f"✅ Discovered and ranked top {len(validated_competitors)} competitors for {company} (selected from {len(competitor_names)} candidates, limited to 8 strongest)"
             messages = state.get('messages', [])
             messages.append(AIMessage(content=completion_msg))
             state['messages'] = messages
@@ -143,9 +152,10 @@ class EnhancedCompetitorDiscoveryAgent(BaseAgent):
                     "step": "Competitor Discovery",
                     "substep": "complete",
                     "initial_competitors_found": len(competitor_names),
-                    "validated_competitors_found": len(validated_competitors),
+                    "final_competitors_selected": len(validated_competitors),
                     "competitors": validated_competitors,
-                    "validation_removed": len(competitor_names) - len(validated_competitors)
+                    "max_competitors_limit": 8,
+                    "filtered_out": len(competitor_names) - len(validated_competitors)
                 }
             )
             
@@ -314,7 +324,7 @@ Return a list of competitor company names."""
     async def _validate_competitors_with_llm(self, company: str, company_description: str, 
                                            core_products: List[str], competitor_names: List[str],
                                            websocket_manager=None, job_id=None) -> List[str]:
-        """Phase 4: Validate competitors using LLM analysis with company descriptions."""
+        """Phase 4: Score and rank competitors using LLM analysis, returning top 8."""
         
         if not competitor_names:
             return []
@@ -329,29 +339,38 @@ Return a list of competitor company names."""
         
         competitors_with_descriptions = await self._get_competitor_descriptions(competitor_names)
         
-        # Step 2: Validate each competitor with LLM
+        # Step 2: Score and rank competitors with LLM
         await self.send_status_update(
             websocket_manager, job_id,
             status="processing",
-            message=f"🤖 Analyzing {len(competitors_with_descriptions)} competitors with LLM",
-            result={"step": "Competitor Discovery", "substep": "llm_validation"}
+            message=f"🤖 Scoring and ranking {len(competitors_with_descriptions)} competitors",
+            result={"step": "Competitor Discovery", "substep": "llm_scoring"}
         )
         
-        validated_competitors = await self._llm_validate_competitors(
+        scored_competitors = await self._llm_score_competitors(
             company, company_description, core_products, competitors_with_descriptions
         )
         
-        removed_count = len(competitor_names) - len(validated_competitors)
+        # Step 3: Sort by score (highest first) and take top 8
+        sorted_competitors = sorted(scored_competitors, key=lambda x: x.score, reverse=True)
+        top_competitors = sorted_competitors[:8]  # Limit to top 8
+        
+        # Extract just the names for backward compatibility
+        validated_competitors = [comp.name for comp in top_competitors]
+        
+        filtered_count = len(competitor_names) - len(validated_competitors)
         
         await self.send_status_update(
             websocket_manager, job_id,
             status="processing",
-            message=f"✅ Validation complete: {len(validated_competitors)} competitors confirmed, {removed_count} filtered out",
+            message=f"✅ Ranking complete: Top {len(validated_competitors)} competitors selected from {len(competitor_names)} candidates",
             result={
                 "step": "Competitor Discovery", 
-                "substep": "validation_complete",
-                "validated": len(validated_competitors),
-                "removed": removed_count
+                "substep": "ranking_complete",
+                "top_competitors": len(validated_competitors),
+                "total_candidates": len(competitor_names),
+                "filtered_out": filtered_count,
+                "top_scores": [f"{comp.name} ({comp.score:.1f})" for comp in top_competitors[:5]]  # Show top 5 scores
             }
         )
         
@@ -393,54 +412,70 @@ Return a list of competitor company names."""
         
         return competitors_with_descriptions
 
-    async def _llm_validate_competitors(self, company: str, company_description: str, 
-                                      core_products: List[str], 
-                                      competitors_with_descriptions: List[CompetitorWithDescription]) -> List[str]:
-        """Use LLM to validate if each company is actually a competitor."""
+    async def _llm_score_competitors(self, company: str, company_description: str, 
+                                   core_products: List[str], 
+                                   competitors_with_descriptions: List[CompetitorWithDescription]) -> List[ScoredCompetitor]:
+        """Use LLM to score competitors based on accuracy and relevance."""
         
         core_products_text = ", ".join(core_products) if core_products else "N/A"
         
-        # Prepare competitor list for validation
+        # Prepare competitor list for scoring
         competitor_info = []
         for comp in competitors_with_descriptions:
             competitor_info.append(f"- {comp.name}: {comp.description}")
         
         competitors_text = "\n".join(competitor_info)
         
-        prompt = f"""You are a competitive intelligence expert. Analyze the following companies to determine if they are actual competitors to the target company.
+        prompt = f"""You are a competitive intelligence expert. Score each candidate company based on how accurate/strong of a competitor they are to the target company.
 
 TARGET COMPANY: {company}
 TARGET DESCRIPTION: {company_description}
 TARGET CORE PRODUCTS: {core_products_text}
 
-CANDIDATE COMPANIES TO VALIDATE:
+CANDIDATE COMPANIES TO SCORE:
 {competitors_text}
 
-For each candidate company, determine if it is a TRUE COMPETITOR based on these criteria:
-1. Serves similar customer segments or markets
-2. Offers similar products, services, or solutions
-3. Customers would realistically consider them as alternatives
-4. They operate in overlapping business areas
-5. They compete for the same revenue opportunities
+For each candidate company, assign a score from 0-10 based on competitive accuracy:
 
-A company is NOT a competitor if:
-- It operates in a completely different industry
-- It serves entirely different customer segments
-- It offers complementary rather than competing products
-- It's a partner, vendor, or supplier rather than competitor
-- It's too broad/generic (like "Google" or "Microsoft" unless specifically competing)
+SCORING CRITERIA:
+- 9-10: DIRECT COMPETITOR - Nearly identical target market, very similar products/services, customers would strongly consider as alternatives
+- 7-8: STRONG COMPETITOR - Overlapping target market, similar solutions, clear competitive threat
+- 5-6: MODERATE COMPETITOR - Some overlap in market/products, potential competitive pressure
+- 3-4: WEAK COMPETITOR - Limited overlap, indirect competition, niche competitive threat
+- 1-2: TANGENTIAL COMPETITOR - Minimal overlap, very indirect competition
+- 0: NOT A COMPETITOR - Different industry, market, or business model entirely
 
-Return only the names of companies that are TRUE COMPETITORS. Be strict in your evaluation."""
+Consider these factors:
+1. Target customer similarity (same buyer personas, market segments)
+2. Product/service similarity (solves same problems, similar features)
+3. Business model similarity (B2B vs B2C, pricing approach, go-to-market)
+4. Market positioning (direct alternative vs complementary)
+5. Competitive threat level (would customers choose them instead?)
 
-        llm_with_schema = self.llm.with_structured_output(ValidatedCompetitors)
+IMPORTANT: 
+- Only include companies with score ≥ 3 (real competitors)
+- Be precise with scoring - don't inflate scores
+- Exclude the target company itself
+- Provide clear reasoning for each score
+
+Return scored competitors with their reasoning."""
+
+        llm_with_schema = self.llm.with_structured_output(ScoredCompetitors)
         response = await llm_with_schema.ainvoke(prompt)
         
-        validated = []
-        for name in response.competitors:
-            cleaned_name = name.strip()
-            if cleaned_name and cleaned_name.lower() != company.lower():
-                validated.append(cleaned_name)
+        # Filter out low scores and clean results
+        valid_competitors = []
+        for comp in response.competitors:
+            cleaned_name = comp.name.strip()
+            if (cleaned_name and 
+                cleaned_name.lower() != company.lower() and 
+                comp.score >= 3.0):  # Only include competitors with score 3 or higher
+                valid_competitors.append(ScoredCompetitor(
+                    name=cleaned_name,
+                    score=comp.score,
+                    reasoning=comp.reasoning
+                ))
         
-        self.logger.info(f"LLM validation: {len(validated)} competitors validated from {len(competitors_with_descriptions)} candidates")
+        self.logger.info(f"LLM scoring: {len(valid_competitors)} competitors scored from {len(competitors_with_descriptions)} candidates")
         
-        return validated
+        return valid_competitors
