@@ -53,6 +53,10 @@ class ResearchState(InputState):
     competitors: NotRequired[List[str]]  # Simple competitor list from competitor discovery agents
     competitor_analysis: NotRequired[Dict[str, Any]]  # Competitor analysis results from CompetitorAnalystAgent
     
+    # Competitor review fields for user interaction
+    competitor_review_pending: NotRequired[bool]  # Flag indicating if competitor review is pending user input
+    competitor_review_step: NotRequired[str]  # Current step in competitor review process
+    
     # Additional workflow fields that are populated
     specialized_data: NotRequired[Dict[str, Any]]  # Specialized researcher data
     reference_titles: NotRequired[List[str]]  # Reference titles from curator
@@ -104,6 +108,10 @@ default_research_state = {
     "competitor_discovery": {},
     "competitors": [],
     "competitor_analysis": {},
+    
+    # Competitor review fields
+    "competitor_review_pending": False,
+    "competitor_review_step": "",
     
     # Additional workflow fields that are populated
     "specialized_data": {},

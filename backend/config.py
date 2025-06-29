@@ -21,7 +21,7 @@ class Config:
             raise ValueError("OPENAI_API_KEY is not configured")
         
         # Database Configuration
-        self.MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/tavily_research")
+        self.MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://tamirkatz1234:a62CoHwmwpmHNQ5f@executive.e6ythg6.mongodb.net/?retryWrites=true&w=majority&appName=executive")
         
         # Application Configuration
         self.PORT = int(os.getenv("PORT", "8000"))

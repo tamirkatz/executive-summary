@@ -7,3 +7,4 @@ export { default as ResearchForm } from "./ResearchForm";
 export { default as ReportCard } from "./ReportCard";
 export { default as ReportCardsView } from "./ReportCardsView";
 export { default as ReportPreview } from "./ReportPreview";
+export { default as CompetitorReview } from "./CompetitorReview";

@@ -58,11 +58,26 @@ export type AnimationStyle = {
   colorTransition: string;
 };
 
+export type Competitor = {
+  name: string;
+  description?: string;
+  category?: string;
+  confidence?: number;
+  evidence?: string;
+  website?: string;
+};
+
 export type ResearchStatusProps = {
   status: ResearchStatusType | null;
   error: string | null;
   isComplete: boolean;
-  currentPhase: "search" | "enrichment" | "briefing" | "complete" | null;
+  currentPhase:
+    | "search"
+    | "enrichment"
+    | "briefing"
+    | "competitor_review"
+    | "complete"
+    | null;
   isResetting: boolean;
   glassStyle: GlassStyle;
   loaderColor: string;

@@ -17,7 +17,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PORT=8000
-      - MONGODB_URI=mongodb://mongodb:27017/tavily_research
+      - MONGODB_URI="mongodb+srv://tamirkatz1234:a62CoHwmwpmHNQ5f@executive.e6ythg6.mongodb.net/?retryWrites=true&w=majority&appName=executive"
     volumes:
       - ./reports:/app/reports
       - ./backend:/app/backend

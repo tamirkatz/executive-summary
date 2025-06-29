@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "company-research-agent",
+    "Name": "218585377568.dkr.ecr.eu-north-1.amazonaws.com/tamirkatz/executive_reserach_agent:latest",
     "Update": "true"
   },
   "Ports": [

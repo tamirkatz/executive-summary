@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "./components/Header";
 import ResearchBriefings from "./components/ResearchBriefings";
-import CurationExtraction from "./components/CurationExtraction";
 import ResearchQueries from "./components/ResearchQueries";
 import ResearchStatus from "./components/ResearchStatus";
 import ResearchReport from "./components/ResearchReport";
 import ResearchForm from "./components/ResearchForm";
+import CompetitorReview from "./components/CompetitorReview";
 import {
   ResearchOutput,
   DocCount,
@@ -13,6 +13,7 @@ import {
   EnrichmentCounts,
   ResearchState,
   ResearchStatusType,
+  Competitor,
 } from "./types";
 import { checkForFinalReport } from "./utils/handlers";
 import {
@@ -22,8 +23,10 @@ import {
   fadeInAnimation,
 } from "./styles";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const WS_URL = import.meta.env.VITE_WS_URL;
+const API_URL =
+  "http://executivemarketintelligence-env.eba-jkhm5m5n.eu-north-1.elasticbeanstalk.com";
+const WS_URL =
+  "executivemarketintelligence-env.eba-jkhm5m5n.eu-north-1.elasticbeanstalk.com";
 
 if (!API_URL || !WS_URL) {
   throw new Error(
@@ -48,10 +51,7 @@ function App() {
   const wsRef = useRef<WebSocket | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [hasFinalReport, setHasFinalReport] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const maxReconnectAttempts = 3;
-  const reconnectDelay = 2000; // 2 seconds
   const [researchState, setResearchState] = useState<ResearchState>({
     company: false,
     financial: false,
@@ -89,12 +89,23 @@ function App() {
 
   // Add state for section collapse
   const [isBriefingExpanded, setIsBriefingExpanded] = useState(true);
-  const [isEnrichmentExpanded, setIsEnrichmentExpanded] = useState(true);
 
   // Add state for phase tracking
   const [currentPhase, setCurrentPhase] = useState<
-    "search" | "enrichment" | "briefing" | "complete" | null
+    | "search"
+    | "enrichment"
+    | "briefing"
+    | "competitor_review"
+    | "complete"
+    | null
   >(null);
+
+  // Add competitor review state
+  const [showCompetitorReview, setShowCompetitorReview] = useState(false);
+  const [discoveredCompetitors, setDiscoveredCompetitors] = useState<
+    Competitor[]
+  >([]);
+  const [currentJobId, setCurrentJobId] = useState<string>("");
 
   // Add new state for PDF generation
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -151,10 +162,55 @@ function App() {
       setShouldShowQueries(false);
       setIsQueriesExpanded(true);
       setIsBriefingExpanded(true);
-      setIsEnrichmentExpanded(true);
       setIsResetting(false);
       setHasScrolledToStatus(false); // Reset scroll flag when resetting research
+      setShowCompetitorReview(false);
+      setDiscoveredCompetitors([]);
+      setCurrentJobId("");
     }, 300); // Match this with CSS transition duration
+  };
+
+  const handleCompetitorConfirm = async (modifiedCompetitors: Competitor[]) => {
+    try {
+      console.log(
+        "🔄 Submitting competitor modifications and starting Phase 2"
+      );
+      setStatus({
+        step: "Starting Phase 2",
+        message: `Continuing research with ${modifiedCompetitors.length} selected competitors...`,
+      });
+
+      const response = await fetch(`${API_URL}/research/competitors/modify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          job_id: currentJobId,
+          competitors: modifiedCompetitors,
+        }),
+      });
+
+      if (response.ok) {
+        setShowCompetitorReview(false);
+        setCurrentPhase("enrichment");
+        setIsResearching(true); // Ensure research state is active
+        setIsComplete(false); // Ensure not marked as complete
+        console.log("✅ Competitors confirmed, Phase 2 starting...");
+      } else {
+        console.error("❌ Failed to submit competitor modifications");
+        setError("Failed to submit competitor modifications");
+      }
+    } catch (error) {
+      console.error("❌ Error submitting competitor modifications:", error);
+      setError("Error submitting competitor modifications");
+    }
+  };
+
+  const handleCompetitorCancel = () => {
+    setShowCompetitorReview(false);
+    // Optionally restart research or return to form
+    resetResearch();
   };
 
   const connectWebSocket = (jobId: string) => {
@@ -174,7 +230,6 @@ function App() {
 
     ws.onopen = () => {
       console.log("🔗 WebSocket connection established for job:", jobId);
-      setReconnectAttempts(0);
     };
 
     ws.onclose = (event) => {
@@ -234,6 +289,51 @@ function App() {
             return;
           }
 
+          // Handle competitor review required
+          if (statusData.status === "competitor_review_required") {
+            console.log("🏆 Competitor review required");
+            const competitors = statusData.result?.competitors || [];
+            setDiscoveredCompetitors(competitors);
+            setShowCompetitorReview(true);
+            setCurrentPhase("competitor_review");
+            // Keep isResearching true during competitor review
+            setIsResearching(true);
+            setIsComplete(false);
+            setStatus({
+              step: "Competitor Review",
+              message:
+                statusData.message ||
+                "Please review the discovered competitors",
+            });
+          }
+
+          // Handle competitor review completion
+          if (statusData.status === "competitor_review_completed") {
+            console.log("✅ Competitor review completed");
+            setShowCompetitorReview(false);
+            setCurrentPhase("enrichment");
+          }
+
+          // Handle Phase 2 start (analysis after competitor review)
+          if (
+            statusData.status === "processing" &&
+            statusData.result?.step === "Phase 2"
+          ) {
+            console.log(
+              "🔄 Phase 2 (Analysis) starting with modified competitors"
+            );
+            setIsComplete(false);
+            setIsResearching(true);
+            setCurrentPhase("enrichment");
+            setShowCompetitorReview(false);
+            setStatus({
+              step: "Phase 2: Analysis",
+              message:
+                statusData.message ||
+                "Continuing research with selected competitors",
+            });
+          }
+
           // Handle phase transitions
           if (statusData.result?.step) {
             const step = statusData.result.step;
@@ -250,15 +350,29 @@ function App() {
               setCurrentPhase("enrichment");
               setIsSearchPhase(false);
               setIsQueriesExpanded(false);
-              setIsEnrichmentExpanded(true);
             } else if (step === "Briefing" && currentPhase !== "briefing") {
               setCurrentPhase("briefing");
-              setIsEnrichmentExpanded(false);
               setIsBriefingExpanded(true);
+            } else if (step === "Competitor Review") {
+              setCurrentPhase("competitor_review");
             }
           }
 
-          // Handle completion
+          // Handle discovery completion (Phase 1 only)
+          if (statusData.status === "discovery_complete") {
+            console.log(
+              "✅ Discovery phase completed - waiting for competitor review"
+            );
+            // Don't set isComplete or isResearching to false - just update status
+            setStatus({
+              step: "Discovery Complete",
+              message:
+                statusData.message ||
+                "Discovery completed - waiting for user review",
+            });
+          }
+
+          // Handle completion (final completion only)
           if (statusData.status === "completed") {
             console.log("✅ Research completed successfully");
             setCurrentPhase("complete");
@@ -300,18 +414,6 @@ function App() {
               setTimeout(() => {
                 setIsQueriesExpanded(false);
               }, 1000);
-            }
-
-            // Handle enrichment phase
-            if (statusData.result.step === "Enriching") {
-              console.log("📚 Enrichment phase updates");
-              setIsEnrichmentExpanded(true);
-              // Collapse enrichment section when complete
-              if (statusData.status === "enrichment_complete") {
-                setTimeout(() => {
-                  setIsEnrichmentExpanded(false);
-                }, 1000);
-              }
             }
 
             // Handle briefing phase
@@ -728,7 +830,6 @@ function App() {
 
     // Reset states
     setHasFinalReport(false);
-    setReconnectAttempts(0);
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
@@ -789,6 +890,7 @@ function App() {
 
       if (data.job_id) {
         console.log("🔗 Connecting WebSocket with job_id:", data.job_id);
+        setCurrentJobId(data.job_id);
         connectWebSocket(data.job_id);
       } else {
         throw new Error("No job ID received");
@@ -925,24 +1027,6 @@ function App() {
       );
     }
 
-    if (
-      currentPhase === "enrichment" ||
-      currentPhase === "briefing" ||
-      currentPhase === "complete"
-    ) {
-      console.log("📚 Rendering CurationExtraction component");
-      components.push(
-        <CurationExtraction
-          key="enrichment"
-          enrichmentCounts={researchState.enrichmentCounts}
-          isExpanded={isEnrichmentExpanded}
-          onToggleExpand={() => setIsEnrichmentExpanded(!isEnrichmentExpanded)}
-          isResetting={isResetting}
-          loaderColor={loaderColor}
-        />
-      );
-    }
-
     // Queries are always at the bottom when visible
     if (
       shouldShowQueries &&
@@ -1065,6 +1149,15 @@ function App() {
         <div className="space-y-12 transition-all duration-500 ease-in-out">
           {renderProgressComponents()}
         </div>
+
+        {/* Competitor Review Modal */}
+        <CompetitorReview
+          competitors={discoveredCompetitors}
+          onConfirm={handleCompetitorConfirm}
+          onCancel={handleCompetitorCancel}
+          isVisible={showCompetitorReview}
+          glassStyle={glassStyle}
+        />
       </div>
     </div>
   );

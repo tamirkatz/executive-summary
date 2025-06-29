@@ -118,7 +118,7 @@ class ComprehensiveReportGenerator(BaseAgent):
         1. COMPETITIVE LANDSCAPE must be the PRIMARY and LONGEST section
         2. Focus on SPECIFIC competitor moves, not generic insights
         3. Include QUANTITATIVE data wherever possible (market sizes, growth rates, valuations)
-        4. Highlight cutting-edge trends: agentic commerce, AI-driven automation, API ecosystems
+        
         5. NO generic strategic recommendations - keep them minimal and data-backed
         6. Lead with FACTS and industry developments, not analysis
         
@@ -150,7 +150,6 @@ class ComprehensiveReportGenerator(BaseAgent):
         
         ## Market & Technology Dynamics
         
-        ### Agentic Commerce & AI Automation
         [Specific developments in AI-driven commerce, autonomous agents, workflow automation]
         
         ### API Economy & Integration Trends
@@ -185,7 +184,6 @@ class ComprehensiveReportGenerator(BaseAgent):
         Focus on:
         1. Specific competitor movements and strategic decisions
         2. Quantitative market data and industry metrics
-        3. Cutting-edge technology trends (agentic commerce, AI automation, API ecosystems)
         4. Factual industry developments over generic insights
         5. Minimal strategic recommendations - let the data speak
         

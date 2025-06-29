@@ -145,10 +145,11 @@ class EnhancedCompetitorDiscoveryAgent(BaseAgent):
             messages.append(AIMessage(content=completion_msg))
             state['messages'] = messages
             
+            # Send status indicating discovery is complete and competitors are ready for review
             await self.send_status_update(
                 websocket_manager, job_id,
-                status="completed",
-                message=completion_msg,
+                status="discovery_complete",
+                message=f"{completion_msg} - Ready for user review",
                 result={
                     "step": "Competitor Discovery",
                     "substep": "complete",
@@ -156,7 +157,8 @@ class EnhancedCompetitorDiscoveryAgent(BaseAgent):
                     "final_competitors_selected": len(validated_competitors),
                     "competitors": validated_competitors,
                     "max_competitors_limit": 8,
-                    "filtered_out": len(competitor_names) - len(validated_competitors)
+                    "filtered_out": len(competitor_names) - len(validated_competitors),
+                    "ready_for_review": True
                 }
             )
             
