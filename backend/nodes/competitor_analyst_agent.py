@@ -101,9 +101,23 @@ class CompetitorAnalystAgent(BaseAgent):
                 result={"step": "Competitor Analysis", "substep": "initialization", "competitors_count": len(competitors)}
             )
             
-            # Analyze each competitor
+            # Analyze each competitor (process all competitors provided after user review)
+            total_competitors_to_analyze = len(competitors)
             all_competitor_news = []
-            for i, competitor in enumerate(competitors[:6]):  # Reduced from 10 to 6 for speed
+
+            # Limit can be applied for extremely large lists, but we default to analysing all to preserve
+            # user-added competitors. To maintain reasonable runtimes we cap at 12, prioritising the first
+            # 12 items. Adjust the cap via an environment variable if needed.
+
+            max_competitors_env = os.getenv("MAX_COMPETITOR_ANALYSIS")
+            try:
+                max_competitors = int(max_competitors_env) if max_competitors_env else 12
+            except ValueError:
+                max_competitors = 12
+
+            competitors_to_process = competitors[:max_competitors]
+
+            for i, competitor in enumerate(competitors_to_process):
                 competitor_name = competitor.get("name", "") if isinstance(competitor, dict) else str(competitor)
                 if not competitor_name:
                     continue
@@ -111,7 +125,7 @@ class CompetitorAnalystAgent(BaseAgent):
                 await self.send_status_update(
                     websocket_manager, job_id,
                     status="processing",
-                    message=f"📰 Analyzing competitor {i+1}/{min(len(competitors), 6)}: {competitor_name}",
+                    message=f"📰 Analyzing competitor {i+1}/{min(total_competitors_to_analyze, max_competitors)}: {competitor_name}",
                     result={"step": "Competitor Analysis", "substep": "individual_analysis", "current_competitor": competitor_name}
                 )
                 
@@ -129,12 +143,12 @@ class CompetitorAnalystAgent(BaseAgent):
             state["competitor_analysis"] = {
                 "news_items": [news.model_dump() for news in all_competitor_news],
                 "analysis_date": datetime.now().isoformat(),
-                "competitors_analyzed": min(len(competitors), 6),
+                "competitors_analyzed": len(competitors_to_process),
                 "total_news_items": len(all_competitor_news)
             }
             
             # Add completion message
-            completion_msg = f"✅ Analyzed {min(len(competitors), 6)} competitors and found {len(all_competitor_news)} relevant news items"
+            completion_msg = f"✅ Analyzed {len(competitors_to_process)} competitors and found {len(all_competitor_news)} relevant news items"
             messages = state.get('messages', [])
             messages.append(AIMessage(content=completion_msg))
             state['messages'] = messages
@@ -146,7 +160,7 @@ class CompetitorAnalystAgent(BaseAgent):
                 result={
                     "step": "Competitor Analysis",
                     "substep": "complete",
-                    "competitors_analyzed": min(len(competitors), 6),
+                    "competitors_analyzed": len(competitors_to_process),
                     "news_items_found": len(all_competitor_news),
                     "analysis": state["competitor_analysis"]
                 }

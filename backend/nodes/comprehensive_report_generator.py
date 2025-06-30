@@ -240,30 +240,46 @@ class ComprehensiveReportGenerator(BaseAgent):
                         else:
                             intel_parts.append(f"  • {comp}")
         
-        # Competitor news analysis
+        # Competitor news analysis - grouped per competitor to ensure all meaningful launches are captured
         if competitor_analysis and competitor_analysis.get('news_items'):
             intel_parts.append("\n\nCOMPETITOR NEWS & DEVELOPMENTS:")
             news_items = competitor_analysis['news_items']
             
-            # Group by category
-            categories = {}
+            # Build nested mapping: competitor -> category -> list[items]
+            comp_map: Dict[str, Dict[str, List[dict]]] = {}
             for item in news_items:
+                comp = item.get('competitor', 'Unknown') or 'Unknown'
                 cat = item.get('category', 'other')
-                if cat not in categories:
-                    categories[cat] = []
-                categories[cat].append(item)
+                comp_map.setdefault(comp, {}).setdefault(cat, []).append(item)
             
-            for category, items in categories.items():
-                intel_parts.append(f"\n{category.replace('_', ' ').title()}:")
-                for item in items[:5]:  # Top 5 per category
-                    competitor = item.get('competitor', 'Unknown')
-                    title = item.get('title', 'No title')
-                    summary = item.get('summary', 'No summary')
-                    date = item.get('date', 'Unknown date')
-                    impact = item.get('impact', 'No impact assessment')
-                    intel_parts.append(f"  • {competitor}: {title} ({date})")
-                    intel_parts.append(f"    Summary: {summary}")
-                    intel_parts.append(f"    Impact: {impact}")
+            # For each competitor print categories that have entries
+            for comp, cat_dict in comp_map.items():
+                intel_parts.append(f"\n{comp}:")
+                # Define display order
+                ordered_cats = [
+                    'product_launch',
+                    'funding',
+                    'partnership',
+                    'm_a',
+                    'other'
+                ]
+                for cat in ordered_cats:
+                    items = cat_dict.get(cat, [])
+                    if not items:
+                        continue  # Skip categories with no items (e.g., no M&A)
+
+                    cat_title = cat.replace('_', ' ').title()
+                    intel_parts.append(f"  {cat_title}:")
+
+                    # List up to 5 items, but for product launches allow up to 10 meaningful ones
+                    limit = 10 if cat == 'product_launch' else 5
+                    for itm in items[:limit]:
+                        title = itm.get('title', 'No title')
+                        date = itm.get('date', 'Unknown date')
+                        impact = itm.get('impact', '')
+                        intel_parts.append(f"    • {title} ({date})")
+                        if impact:
+                            intel_parts.append(f"      Impact: {impact}")
         
         # Basic competitor list
         if competitors:

@@ -94,5 +94,5 @@ Generate queries on the company fundamentals of {company} such as:
             'company_data': company_data
         }
 
-    async def run(self, state: ResearchState) -> Dict[str, Any]:
+    async def run(self, state: ResearchState) -> ResearchState:
         return await self.analyze(state) 

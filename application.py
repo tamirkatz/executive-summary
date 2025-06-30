@@ -12,10 +12,14 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.config import config
-from backend.workflow import Graph, pending_competitor_reviews
+from backend.workflow import (
+    Graph,
+    competitor_review_events,
+    competitor_modifications_pending,
+)
 from backend.services.mongodb import MongoDBService
 from backend.services.pdf_service import PDFService
 from backend.services.websocket_manager import WebSocketManager
@@ -130,6 +134,11 @@ class CompetitorModificationRequest(BaseModel):
     job_id: str
     competitors: list
 
+class CardChatRequest(BaseModel):
+    """Request schema for on-demand card chat research."""
+    card_context: str = Field(..., description="Textual content of the card the user is asking about")
+    question: str = Field(..., description="User's question about the card context")
+
 @app.options("/research")
 async def preflight():
     response = JSONResponse(content=None, status_code=200)
@@ -189,11 +198,9 @@ async def process_research(job_id: str, data: ExecutiveSummaryRequest):
                 "status": "competitor_review_pending",
                 "company": data.company,
                 "last_update": datetime.now().isoformat(),
-                "discovery_complete": True
             })
-            return
+            
         
-        # If no competitors were found, the workflow completed without review
         # Look for the compiled report in multiple possible locations
         report_content = (
             state.get('report') or 
@@ -416,144 +423,163 @@ async def get_research_status(job_id: str):
 
 @app.post("/research/competitors/modify")
 async def modify_competitors(data: CompetitorModificationRequest):
-    """Handle competitor modifications and resume workflow."""
+    """Handle competitor modifications and release the workflow pause."""
     try:
         job_id = data.job_id
         modified_competitors = data.competitors
         
         logger.info(f"Received competitor modifications for job {job_id}: {len(modified_competitors)} competitors")
         
-        # Store modified competitors for this job (in production, use database)
+        # Store modified competitors
         job_status[job_id]["modified_competitors"] = modified_competitors
-        
-        # Send status update confirming the review is complete
+
+        # Buffer the modifications so the workflow node can pull them
+        competitor_modifications_pending[job_id] = modified_competitors
+
+        # Release the workflow pause
+        if event := competitor_review_events.get(job_id):
+            event.set()
+            logger.info(f"Set review event to resume workflow for job {job_id}")
+        else:
+            logger.warning(f"No review event found for job {job_id}")
+
+        # Notify the frontend that review is complete
         await manager.send_status_update(
             job_id=job_id,
             status="competitor_review_completed",
             message=f"Competitor review completed with {len(modified_competitors)} competitors",
             result={
                 "competitors": modified_competitors,
-                "step": "Competitor Analysis"
-            }
+                "step": "Competitor Analysis",
+            },
         )
-        
-        # Resume workflow if state is available
-        if job_id in pending_competitor_reviews:
-            logger.info(f"Resuming workflow for job {job_id} with modified competitors")
-            asyncio.create_task(resume_workflow_after_competitor_review(job_id, modified_competitors))
-        else:
-            logger.warning(f"No pending workflow state found for job {job_id}")
-        
+
         return {
             "status": "success",
-            "message": "Competitor modifications saved and workflow resumed",
-            "competitor_count": len(modified_competitors)
+            "message": "Competitor modifications saved – workflow resumed",
+            "competitor_count": len(modified_competitors),
         }
-        
+
     except Exception as e:
-        logger.error(f"Error modifying competitors for job {job_id}: {str(e)}", exc_info=True)
+        logger.error(
+            f"Error modifying competitors for job {data.job_id}: {str(e)}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
-async def resume_workflow_after_competitor_review(job_id: str, modified_competitors: list):
-    """Resume the workflow execution after competitor review is completed (Phase 2)."""
+@app.post("/card_chat")
+async def card_chat(data: CardChatRequest):
+    """Perform a lightweight, on-demand research cycle to answer a card-specific question.
+
+    1. Use an LLM to produce a handful of highly-relevant Tavily search queries based on the
+       card's context and the user's question.
+    2. Execute those queries with Tavily (max 3 queries × 5 results each).
+    3. Aggregate the documents and feed them back to the LLM (o3-mini) together with the
+       card context to generate a concise answer.
+    """
     try:
-        if job_id not in pending_competitor_reviews:
-            logger.error(f"No pending state found for job {job_id}")
-            return
-        
-        # Get the stored state from Phase 1
-        discovery_state = pending_competitor_reviews[job_id]
-        
-        # Update state with modified competitors
-        competitor_names = []
-        for comp in modified_competitors:
-            if isinstance(comp, dict):
-                competitor_names.append(comp.get("name", ""))
-            else:
-                competitor_names.append(str(comp))
-        
-        # Prepare state for Phase 2 (Analysis)
-        analysis_state = discovery_state.copy()
-        analysis_state["competitors"] = competitor_names
-        analysis_state["competitor_review_pending"] = False
-        analysis_state["competitor_review_step"] = "completed"
-        
-        logger.info(f"Starting Phase 2 (Analysis) for job {job_id} with {len(competitor_names)} modified competitors")
-        
-        await manager.send_status_update(
-            job_id=job_id,
-            status="processing",
-            message=f"Starting research - Phase 2: Analysis with {len(competitor_names)} competitors",
-            result={"step": "Phase 2", "competitors": competitor_names}
+        from fastapi import HTTPException
+        from langchain_openai import ChatOpenAI
+        from langchain_core.prompts import ChatPromptTemplate
+        from tavily import AsyncTavilyClient
+        import json, asyncio
+
+        if not config.TAVILY_API_KEY:
+            raise HTTPException(status_code=500, detail="TAVILY_API_KEY is not configured")
+
+        # Initialise the o3-mini model once (lower temperature for deterministic queries)
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+
+        # 1) Generate Tavily search queries
+        query_prompt = ChatPromptTemplate.from_messages([
+            (
+                "system",
+                """You create concise web search queries for Tavily search API. "
+                "Receive the card context and the user's analytical question and return"
+                " EXACTLY a JSON list (array) of up to 3 strings. Each string should be a"
+                " standalone query that will help answer the question. Do not add any"
+                " other keys or text – return only valid JSON. """,
+            ),
+            (
+                "user",
+                """CARD CONTEXT:\n{card}\n\nQUESTION:\n{question}\n""",
+            ),
+        ])
+
+        query_output = await llm.ainvoke(
+            query_prompt.format_messages(card=data.card_context[:4000], question=data.question)
         )
-        
-        # Create a new graph instance for the analysis phase
-        graph = Graph(
-            company=analysis_state.get('company'),
-            url=analysis_state.get('company_url'),
-            user_role=analysis_state.get('user_role'),
-            websocket_manager=manager,
-            job_id=job_id
-        )
-        
-        # Run Phase 2 (Analysis workflow)
-        final_state = {}
-        async for s in graph.run_analysis_phase(analysis_state, {"configurable": {"thread_id": job_id}}):
-            final_state.update(s)
-        
-        # Handle final report generation
-        report_content = (
-            final_state.get('report') or 
-            (final_state.get('comprehensive_report_generator') or {}).get('report') or
-            (final_state.get('editor') or {}).get('report') or
-            (final_state.get('executive_report_composer') or {}).get('report')
-        )
-        
-        if report_content:
-            logger.info(f"Phase 2 completed successfully for job {job_id} (report length: {len(report_content)})")
-            job_status[job_id].update({
-                "status": "completed",
-                "report": report_content,
-                "company": analysis_state.get('company'),
-                "last_update": datetime.now().isoformat()
-            })
-            if mongodb:
-                mongodb.update_job(job_id=job_id, status="completed")
-                mongodb.store_report(job_id=job_id, report_data={"report": report_content})
-            await manager.send_status_update(
-                job_id=job_id,
-                status="completed",
-                message="Research completed successfully",
-                result={
-                    "report": report_content,
-                    "company": analysis_state.get('company')
-                }
+
+        try:
+            queries = json.loads(query_output.content)
+            if not isinstance(queries, list):
+                raise ValueError("LLM did not return a list")
+        except Exception:
+            # Fallback: treat the raw output as a single query list
+            queries = [query_output.content.strip()]  # type: ignore
+
+        queries = queries[:3]  # safety cap
+
+        # 2) Execute Tavily searches concurrently
+        tavily_client = AsyncTavilyClient(api_key=config.TAVILY_API_KEY)
+
+        async def run_search(q):
+            try:
+                return await tavily_client.search(query=q, max_results=5)
+            except Exception as e:
+                logger.error(f"Tavily search failed for '{q}': {e}")
+                return {"query": q, "results": []}
+
+        search_tasks = [run_search(q) for q in queries]
+        search_results = await asyncio.gather(*search_tasks)
+
+        # 3) Aggregate snippets into a single context block
+        research_context_parts = []
+        for idx, res in enumerate(search_results):
+            q = queries[idx]
+            docs = res.get("results", []) if isinstance(res, dict) else []
+            for doc in docs:
+                snippet = doc.get("snippet", "")
+                url = doc.get("url", "")
+                title = doc.get("title", "")
+                research_context_parts.append(f"- {title} ({url}): {snippet}")
+        research_context = "\n".join(research_context_parts)[:6000]  # truncate if huge
+
+        # 4) Final answer synthesis
+        answer_prompt = ChatPromptTemplate.from_messages([
+            (
+                "system",
+                """You are an expert business analyst. Using only the information in the"
+                " CARD CONTEXT and ADDITIONAL RESEARCH sections, answer the user's"
+                " question clearly and concisely. If the information is insufficient,"
+                " say so. Cite sources with parentheses containing the domain name, e.g.,"
+                " (bloomberg.com)."
+                """,
+            ),
+            (
+                "user",
+                """CARD CONTEXT:\n{card}\n\nADDITIONAL RESEARCH:\n{research}\n\nQUESTION:\n{question}\n""",
+            ),
+        ])
+
+        answer_output = await llm.ainvoke(
+            answer_prompt.format_messages(
+                card=data.card_context[:4000],
+                research=research_context,
+                question=data.question,
             )
-        else:
-            logger.error(f"Phase 2 completed without finding report for job {job_id}")
-            await manager.send_status_update(
-                job_id=job_id,
-                status="error",
-                message="Phase 2 completed but no report was generated",
-                result={"error": "No report found after Phase 2 completion"}
-            )
-        
-        # Clean up the pending review state
-        del pending_competitor_reviews[job_id]
-        logger.info(f"Cleaned up pending state for job {job_id}")
-        
+        )
+
+        return {
+            "queries": queries,
+            "answer": answer_output.content.strip(),
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error in Phase 2 for job {job_id}: {str(e)}", exc_info=True)
-        await manager.send_status_update(
-            job_id=job_id,
-            status="error",
-            message=f"Phase 2 failed: {str(e)}",
-            result={"error": str(e)}
-        )
-        # Clean up the pending state even on error
-        if job_id in pending_competitor_reviews:
-            del pending_competitor_reviews[job_id]
-            
+        logger.error(f"card_chat error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to process card chat request")
+
 frontend_path = Path(__file__).parent / "ui" / "dist"
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 

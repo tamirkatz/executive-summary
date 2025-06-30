@@ -331,7 +331,7 @@ class ClientTrendAgent(BaseAgent):
                 f"{industry} AI disruption {current_year} market transformation",
                 f"{industry} emerging technologies disrupting business models",
                 f"{industry} automation replacing traditional processes",
-                f"{industry} blockchain cryptocurrency adoption trends",
+                f"{industry} new technology adoption trends {current_year}",
                 f"{industry} regulatory changes disrupting markets {current_year}"
             ]
             
