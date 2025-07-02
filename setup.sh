@@ -25,19 +25,25 @@ else
     use_uv=false
 fi
 
-# Check if Python 3.11+ is installed
+# Check if Python 3.11+ is installed (support both 'python3' and 'python' commands)
 echo -e "\n${BLUE}Checking Python version...${NC}"
+
+# Determine which python executable to use
 if command -v python3 >/dev/null 2>&1; then
-    python_version=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-    if [ "$(version_compare "$python_version")" -ge "$(version_compare "3.11")" ]; then
-        echo -e "${GREEN}✓ Python $python_version is installed${NC}"
-    else
-        echo "❌ Python 3.11 or higher is required. Current version: $python_version"
-        echo "Please install Python 3.11 or higher from https://www.python.org/downloads/"
-        exit 1
-    fi
+    python_cmd="python3"
+elif command -v python >/dev/null 2>&1; then
+    python_cmd="python"
 else
-    echo "❌ Python 3 is not installed"
+    echo "❌ Python is not installed"
+    echo "Please install Python 3.11 or higher from https://www.python.org/downloads/"
+    exit 1
+fi
+
+python_version=$($python_cmd -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+if [ "$(version_compare "$python_version")" -ge "$(version_compare "3.11")" ]; then
+    echo -e "${GREEN}✓ Python $python_version is installed (${python_cmd})${NC}"
+else
+    echo "❌ Python 3.11 or higher is required. Current version: $python_version"
     echo "Please install Python 3.11 or higher from https://www.python.org/downloads/"
     exit 1
 fi
@@ -72,7 +78,14 @@ if [[ $use_venv =~ ^[Yy]$ ]]; then
     if [ "$use_uv" = true ]; then
         echo -e "\n${BLUE}Setting up Python virtual environment with uv...${NC}"
         uv venv .venv
-        source .venv/bin/activate
+        # Activate the virtual environment (handle macOS/Linux vs Windows/Git Bash paths)
+        if [ -f ".venv/bin/activate" ]; then
+            # Unix-like path
+            source .venv/bin/activate
+        elif [ -f ".venv/Scripts/activate" ]; then
+            # Windows path (when using Git Bash / MSYS2)
+            source .venv/Scripts/activate
+        fi
         echo -e "${GREEN}✓ Virtual environment created and activated with uv${NC}"
 
         # Install Python dependencies with uv
@@ -81,13 +94,20 @@ if [[ $use_venv =~ ^[Yy]$ ]]; then
         echo -e "${GREEN}✓ Python dependencies installed${NC}"
     else
         echo -e "\n${BLUE}Setting up Python virtual environment with pip...${NC}"
-        python3 -m venv .venv
-        source .venv/bin/activate
+        $python_cmd -m venv .venv
+        # Activate the virtual environment (handle macOS/Linux vs Windows/Git Bash paths)
+        if [ -f ".venv/bin/activate" ]; then
+            # Unix-like path
+            source .venv/bin/activate
+        elif [ -f ".venv/Scripts/activate" ]; then
+            # Windows path (when using Git Bash / MSYS2)
+            source .venv/Scripts/activate
+        fi
         echo -e "${GREEN}✓ Virtual environment created and activated${NC}"
 
         # Install Python dependencies in venv
         echo -e "\n${BLUE}Installing Python dependencies in virtual environment...${NC}"
-        pip install -r requirements.txt
+        $python_cmd -m pip install -r requirements.txt
         echo -e "${GREEN}✓ Python dependencies installed${NC}"
     fi
 else
@@ -107,7 +127,7 @@ else
             echo -e "${GREEN}✓ Python dependencies installed${NC}"
         else
             echo -e "\n${BLUE}Installing Python dependencies globally...${NC}"
-            pip3 install -r requirements.txt
+            $python_cmd -m pip install -r requirements.txt
             echo -e "${GREEN}✓ Python dependencies installed${NC}"
         fi
         echo -e "${BLUE}Note: Dependencies have been installed in your global Python environment${NC}"
@@ -116,7 +136,7 @@ else
         if [ "$use_uv" = true ]; then
             echo -e "${BLUE}You can do this by running: uv pip install -r requirements.txt${NC}"
         else
-            echo -e "${BLUE}You can do this by running: pip install -r requirements.txt${NC}"
+            echo -e "${BLUE}You can do this by running: $python_cmd -m pip install -r requirements.txt${NC}"
         fi
     fi
 fi
@@ -188,14 +208,14 @@ start_servers=${start_servers:-Y}
 
 if [[ $start_servers =~ ^[Yy]$ ]]; then
     echo -e "\n${BLUE}Choose backend server option:${NC}"
-    echo "1) python -m application.py"
+    echo "1) python -m application"
     echo "2) uvicorn application:app --reload --port 8000"
     read -r backend_choice
 
     # Start backend server in background
     if [ "$backend_choice" = "1" ]; then
         echo -e "\n${GREEN}Starting backend server with python...${NC}"
-        python -m application.py &
+        python -m application &
     else
         echo -e "\n${GREEN}Starting backend server with uvicorn...${NC}"
         uvicorn application:app --reload --port 8000 &
@@ -226,7 +246,7 @@ if [[ $start_servers =~ ^[Yy]$ ]]; then
 else
     echo -e "\n${BOLD}To start the application manually:${NC}"
     echo -e "\n1. Start the backend server (choose one):"
-    echo "   Option 1: python -m application.py"
+    echo "   Option 1: python -m application"
     echo "   Option 2: uvicorn application:app --reload --port 8000"
     echo -e "\n2. In a new terminal, start the frontend:"
     echo "   cd ui"

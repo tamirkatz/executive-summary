@@ -1,9 +1,4 @@
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.md)
-[![zh](https://img.shields.io/badge/lang-zh-green.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.zh.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.fr.md)
-[![es](https://img.shields.io/badge/lang-es-yellow.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.es.md)
-[![jp](https://img.shields.io/badge/lang-jp-orange.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.jp.md)
-[![kr](https://img.shields.io/badge/lang-ko-purple.svg)](https://github.com/pogjester/company-research-agent/blob/main/README.kr.md)
+
 
 # Agentic Company Researcher 🔍
 
@@ -11,9 +6,36 @@
 
 A multi-agent tool that generates comprehensive company research reports. The platform uses a pipeline of AI agents to gather, curate, and synthesize information about any company.
 
-✨Check it out online! https://companyresearcher.tavily.com ✨
+✨Live Demo: https://app.strategicoverview.net/ ✨
 
 https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
+
+## Table of Contents
+
+1. [Objectives](#objectives)
+2. [Features](#features)
+3. [Live Demo](#live-demo)
+4. [Agent Framework](#agent-framework)
+5. [API Integration](#api-integration)
+6. [Setup](#setup)
+7. [Usage](#usage)
+8. [Example Outputs](#example-outputs)
+9. [Contributing](#contributing)
+
+## Objectives
+
+This project aims to **democratize access to high-quality company intelligence** by automating and accelerating the research process.
+
+1. Automate time-consuming desk research using a network of expert AI agents.
+2. Aggregate and filter data from heterogeneous sources to surface trustworthy insights.
+3. Produce executive-ready, richly formatted reports in minutes instead of hours.
+4. Enable iterative, interactive research where users can refine competitor lists and questions on-the-fly.
+
+## Live Demo
+
+A production deployment is hosted at **[app.strategicoverview.net](https://app.strategicoverview.net/)**.
+
+➜ Open the link, enter a company name (e.g., "Tesla, Inc."), and watch the agents work in real-time. You can download the final report as Markdown or PDF when it completes.
 
 ## Features
 
@@ -402,6 +424,54 @@ The application can be deployed to various cloud platforms. Here are some common
 - **Google Cloud Run**: Suitable for containerized deployment with automatic scaling
 
 Choose the platform that best suits your needs. The application is platform-agnostic and can be hosted anywhere that supports Python web applications.
+
+## API Integration
+
+The backend exposes a concise REST + WebSocket interface. All paths below are relative to your server root (e.g. `http://localhost:8000`).
+
+| Method | Path                           | Payload                                                                                 | Purpose                                                          |
+| ------ | ------------------------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| POST   | `/research`                    | `{ "company": "ACME Corp", "company_url": "https://acme.com", "user_role": "analyst" }` | Kick-off a new research run. Returns `job_id` and WebSocket URL. |
+| GET    | `/research/{job_id}`           | —                                                                                       | Retrieve job metadata and status.                                |
+| GET    | `/research/{job_id}/report`    | —                                                                                       | Fetch the final Markdown report (once completed).                |
+| GET    | `/research/status/{job_id}`    | —                                                                                       | Lightweight status polling endpoint.                             |
+| POST   | `/research/competitors/modify` | `{ "job_id": "<job_id>", "competitors": ["Foo Inc", "Bar Ltd"] }`                       | Overwrite the automatically detected competitor list.            |
+| POST   | `/generate-pdf`                | `{ "report_content": "<md>", "company_name": "ACME Corp" }`                             | Convert Markdown report to a styled PDF.                         |
+| POST   | `/card_chat`                   | `{ "card_context": "...", "question": "Explain ..." }`                                  | One-off Q&A related to a specific research card.                 |
+
+### WebSocket
+
+```
+ws://<host>/research/ws/{job_id}
+```
+
+The WebSocket streams structured JSON updates, for example:
+
+```json
+{
+  "status": "processing",
+  "step": "Briefing",
+  "category": "Financials",
+  "progress": 0.42,
+  "message": "Generating Financials briefing"
+}
+```
+
+Refer to `backend/services/websocket_manager.py` for the full schema.
+
+## Example Outputs
+
+A complete sample report for Apple Inc. is included in [`generated_comprehensive_report.md`](generated_comprehensive_report.md).
+
+![Sample report screenshot](static/ui-1.png)
+
+```md
+### Executive Summary
+
+Apple Inc. (NASDAQ: AAPL) is a leading global technology company...
+```
+
+You can also download PDF versions via the **Download PDF** button in the UI.
 
 ## Contributing
 

@@ -122,11 +122,12 @@ class ComprehensiveReportGenerator(BaseAgent):
         5. NO generic strategic recommendations - keep them minimal and data-backed
         6. Lead with FACTS and industry developments, not analysis
         
-        Company Context: {company_context}
-        
         Structure the report as:
         
         # Strategic Intelligence Report for {company}
+        
+        ## Company Overview
+        {company_context}
         
         ## Executive Summary
         [3-4 sentences highlighting the most critical competitive developments and market dynamics affecting {company}. Focus on immediate competitive threats and market opportunities.]
@@ -207,6 +208,8 @@ class ComprehensiveReportGenerator(BaseAgent):
         context_parts = [f"{company} Business Profile:"]
         
         if profile:
+            if profile.get('description'):
+                context_parts.append(f"- Description: {profile['description']}")
             if profile.get('core_products'):
                 context_parts.append(f"- Core Products: {', '.join(profile['core_products'])}")
             if profile.get('use_cases'):

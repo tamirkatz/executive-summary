@@ -243,7 +243,6 @@ class CompetitorAnalystAgent(BaseAgent):
                     limit=8,  # Reduced from 30
                     instructions="""Focus ONLY on: 1) Recent product launches, 2) M&A announcements, 
                     3) Partnership deals. Extract only factual information with dates from the last 6 months.""",
-                    categories=["News", "Press"],  # Reduced categories
                     exclude_paths=["/careers/*", "/support/*", "/legal/*", "/blog/*"],
                     extract_depth="basic"  # Reduced from advanced
                 )

@@ -3,7 +3,8 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { Check, Copy, Download, Loader2 } from "lucide-react";
-import { GlassStyle, AnimationStyle } from "../types";
+import { GlassStyle, AnimationStyle, ResearchCardData } from "../types";
+import { Link } from "react-router-dom";
 
 interface ResearchReportProps {
   output: {
@@ -20,6 +21,7 @@ interface ResearchReportProps {
   isCopied: boolean;
   onCopyToClipboard: () => void;
   onGeneratePdf: () => void;
+  cards?: ResearchCardData[];
 }
 
 const ResearchReport: React.FC<ResearchReportProps> = ({
@@ -32,6 +34,7 @@ const ResearchReport: React.FC<ResearchReportProps> = ({
   isCopied,
   onCopyToClipboard,
   onGeneratePdf,
+  cards = [],
 }) => {
   if (!output || !output.details) return null;
 
@@ -110,18 +113,70 @@ const ResearchReport: React.FC<ResearchReportProps> = ({
                   </div>
                 );
               },
-              h2: ({ node, ...props }) => (
-                <h2
-                  className="text-3xl font-bold text-gray-900 first:mt-2 mt-8 mb-4"
-                  {...props}
-                />
-              ),
-              h3: ({ node, ...props }) => (
-                <h3
-                  className="text-xl font-semibold text-gray-900 mt-6 mb-3"
-                  {...props}
-                />
-              ),
+              h2: ({ node, children, ...props }) => {
+                const headingText = React.Children.toArray(children)
+                  .map((child) => (typeof child === "string" ? child : ""))
+                  .join("")
+                  .trim();
+
+                const cardMatch = cards.find(
+                  (c) => c.title.toLowerCase() === headingText.toLowerCase()
+                );
+
+                return (
+                  <div className="relative group inline-block">
+                    <h2
+                      className="text-3xl font-bold text-gray-900 first:mt-2 mt-8 mb-4"
+                      {...props}
+                    >
+                      {children}
+                    </h2>
+                    {cardMatch && (
+                      <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10">
+                        <Link
+                          to={`/deep-dive/${cardMatch.id}`}
+                          state={{ card: cardMatch }}
+                          className="px-3 py-1.5 rounded-lg bg-[#468BFF] text-white text-sm shadow-lg hover:bg-[#8FBCFA] transition-colors"
+                        >
+                          Deep Dive →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              },
+              h3: ({ node, children, ...props }) => {
+                const headingText = React.Children.toArray(children)
+                  .map((child) => (typeof child === "string" ? child : ""))
+                  .join("")
+                  .trim();
+
+                const cardMatch = cards.find(
+                  (c) => c.title.toLowerCase() === headingText.toLowerCase()
+                );
+
+                return (
+                  <div className="relative group inline-block">
+                    <h3
+                      className="text-xl font-semibold text-gray-900 mt-6 mb-3"
+                      {...props}
+                    >
+                      {children}
+                    </h3>
+                    {cardMatch && (
+                      <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10">
+                        <Link
+                          to={`/deep-dive/${cardMatch.id}`}
+                          state={{ card: cardMatch }}
+                          className="px-3 py-1.5 rounded-lg bg-[#468BFF] text-white text-sm shadow-lg hover:bg-[#8FBCFA] transition-colors"
+                        >
+                          Deep Dive →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              },
               p: ({ node, children, ...props }) => {
                 const text = String(children);
                 const isSubsectionHeader =

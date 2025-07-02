@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   ResearchOutput,
-  ViewMode,
   ResearchCardData,
   ChatMessage,
   GlassStyle,
 } from "../types";
-import ViewToggle from "./ViewToggle";
-import ResearchCardGrid from "./ResearchCardGrid";
+import { Link } from "react-router-dom";
 import ResearchReport from "./ResearchReport";
 import { parseReportToCards, addMessageToCard } from "../utils/reportParser";
 
@@ -40,7 +38,6 @@ const EnhancedResearchReport: React.FC<EnhancedResearchReportProps> = ({
   onGeneratePdf,
   onAskQuestion,
 }) => {
-  const [currentView, setCurrentView] = useState<ViewMode>("report");
   const [cards, setCards] = useState<ResearchCardData[]>([]);
 
   // Parse report into cards when output changes
@@ -50,11 +47,6 @@ const EnhancedResearchReport: React.FC<EnhancedResearchReportProps> = ({
       setCards(parsedCards);
     }
   }, [output?.details?.report]);
-
-  // Handle card removal
-  const handleRemoveCard = (cardId: string) => {
-    setCards((prevCards) => prevCards.filter((card) => card.id !== cardId));
-  };
 
   // Default question handler if none provided
   const handleAskQuestion = async (
@@ -144,77 +136,45 @@ const EnhancedResearchReport: React.FC<EnhancedResearchReportProps> = ({
         isResetting ? "opacity-50" : "opacity-100"
       }`}
     >
-      {/* Header with View Toggle */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Research Results
-          </h2>
-          <p className="text-gray-600">
-            {currentView === "report"
-              ? "Full comprehensive report"
-              : `${cards.length} research points available for exploration`}
-          </p>
-        </div>
-        <ViewToggle
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          className="ml-4"
-        />
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Research Results
+        </h2>
+        <p className="text-gray-600">
+          Click on a section below to deep dive into more details.
+        </p>
+
+        {/* Deep Dive Links */}
+        {cards.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            {cards.map((card) => (
+              <Link
+                key={card.id}
+                to={`/deep-dive/${card.id}`}
+                state={{ card }}
+                className="px-3 py-1.5 rounded-lg bg-[#468BFF] text-white text-sm hover:bg-[#8FBCFA] transition-colors"
+              >
+                {card.title}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Content based on current view */}
-      {currentView === "report" ? (
-        <ResearchReport
-          output={output}
-          isResetting={isResetting}
-          glassStyle={glassStyle}
-          fadeInAnimation={fadeInAnimation}
-          loaderColor={loaderColor}
-          isGeneratingPdf={isGeneratingPdf}
-          isCopied={isCopied}
-          onCopyToClipboard={onCopyToClipboard}
-          onGeneratePdf={onGeneratePdf}
-        />
-      ) : (
-        <div className="mt-6 -mx-6 px-2">
-          {/* Expanded canvas container */}
-          <div className="w-full max-w-none">
-            {cards.length > 0 ? (
-              <ResearchCardGrid
-                cards={cards}
-                onAskQuestion={handleAskQuestion}
-                onRemoveCard={handleRemoveCard}
-                className="min-h-screen"
-              />
-            ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <p className="text-gray-500">
-                  No research points available to display as cards.
-                </p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Switch to Report View to see the full content.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Always show the full report below */}
+      <ResearchReport
+        output={output}
+        isResetting={isResetting}
+        glassStyle={glassStyle}
+        fadeInAnimation={fadeInAnimation}
+        loaderColor={loaderColor}
+        isGeneratingPdf={isGeneratingPdf}
+        isCopied={isCopied}
+        onCopyToClipboard={onCopyToClipboard}
+        onGeneratePdf={onGeneratePdf}
+        cards={cards}
+      />
     </div>
   );
 };
