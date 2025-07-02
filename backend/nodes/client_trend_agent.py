@@ -270,11 +270,11 @@ class ClientTrendAgent(BaseAgent):
             "3. Use Cases: Specific use cases reveal target industry applications\n"
             "4. Customer Segments: Direct indicators of client types\n\n"
             
-            "EXAMPLES OF THOROUGH ANALYSIS:\n"
-            "- Payment processor (Nuvei): ecommerce, gaming, fintech, SaaS, digital marketplaces\n"
-            "- Search API (Tavily): AI development, enterprise software, research institutions, media\n"
-            "- No-code platform (Bubble): creative agencies, startups, SMBs, consulting firms\n"
-            "- Developer tools: enterprise software, fintech, healthtech, edtech, proptech\n\n"
+            "ANALYSIS METHODOLOGY:\n"
+            "- Technology services: Identify industries that use similar technology solutions\n"
+            "- Business solutions: Focus on sectors that face similar operational challenges\n"
+            "- Industry applications: Consider how the company's offerings apply across different verticals\n"
+            "- Market adoption: Look for industries showing growth in demand for such solutions\n\n"
             
             "Focus on industries where DISRUPTION is happening or likely to happen. Prioritize industries "
             "undergoing digital transformation, regulatory changes, or technological shifts.\n\n"
@@ -292,24 +292,60 @@ class ClientTrendAgent(BaseAgent):
             
         except Exception as e:
             self.logger.warning(f"Client industry identification failed, using fallback: {e}")
-            # Fallback based on sector and industry
-            sector = profile.get("sector", "").lower()
-            industry = profile.get("industry", "").lower()
-            
-            fallback_industries = []
-            if "payment" in sector or "fintech" in sector:
-                fallback_industries = ["ecommerce", "gaming", "fintech", "SaaS"]
-            elif "software" in sector or "saas" in sector:
-                fallback_industries = ["startups", "enterprise", "healthcare", "education"]
-            elif "marketing" in sector:
-                fallback_industries = ["retail", "ecommerce", "hospitality", "real estate"]
-            else:
-                fallback_industries = ["technology", "business services", "retail"]
+            # Dynamic fallback based on company profile analysis
+            fallback_industries = self._generate_fallback_industries(profile)
             
             return {
                 "industries": fallback_industries[:4],
-                "rationale": f"Fallback based on company sector: {sector}"
+                "rationale": "Fallback based on dynamic analysis of company profile and business context"
             }
+
+    def _generate_fallback_industries(self, profile: Dict[str, Any]) -> List[str]:
+        """Generate fallback client industries dynamically based on company profile."""
+        # Extract all available company context
+        sector = profile.get("sector", "").lower()
+        industry = profile.get("industry", "").lower()
+        description = profile.get("description", "").lower()
+        business_model = profile.get("business_model", "").lower()
+        core_products = [p.lower() for p in profile.get("core_products", [])]
+        customer_segments = [c.lower() for c in profile.get("customer_segments", [])]
+        
+        # Combine all text for analysis
+        all_text = f"{sector} {industry} {description} {business_model} {' '.join(core_products)} {' '.join(customer_segments)}"
+        
+        # Dynamic industry mapping based on keywords found in company profile
+        industry_indicators = {
+            "technology": ["technology", "tech", "software", "digital", "platform", "app", "system", "solution"],
+            "healthcare": ["healthcare", "medical", "health", "patient", "clinical", "pharmaceutical", "biotech"],
+            "finance": ["financial", "finance", "banking", "investment", "insurance", "trading", "credit"],
+            "education": ["education", "learning", "training", "academic", "school", "university", "course"],
+            "retail": ["retail", "commerce", "shopping", "consumer", "product", "merchandise", "store"],
+            "manufacturing": ["manufacturing", "production", "industrial", "factory", "supply", "logistics"],
+            "media": ["media", "content", "publishing", "entertainment", "advertising", "marketing", "broadcast"],
+            "real estate": ["real estate", "property", "construction", "building", "housing", "development"],
+            "transportation": ["transportation", "logistics", "shipping", "delivery", "mobility", "automotive"],
+            "energy": ["energy", "power", "utilities", "renewable", "oil", "gas", "electric", "sustainability"],
+            "telecommunications": ["telecom", "communication", "network", "connectivity", "wireless", "broadband"],
+            "government": ["government", "public", "municipal", "federal", "regulatory", "civic", "administration"],
+            "nonprofits": ["nonprofit", "foundation", "charity", "social", "community", "humanitarian"],
+            "professional services": ["consulting", "services", "advisory", "professional", "business", "corporate"],
+            "hospitality": ["hospitality", "travel", "tourism", "hotel", "restaurant", "leisure", "event"]
+        }
+        
+        # Score industries based on keyword matches
+        industry_scores = {}
+        for industry_name, keywords in industry_indicators.items():
+            score = sum(1 for keyword in keywords if keyword in all_text)
+            if score > 0:
+                industry_scores[industry_name] = score
+        
+        # Sort by score and return top matches
+        if industry_scores:
+            sorted_industries = sorted(industry_scores.items(), key=lambda x: x[1], reverse=True)
+            return [industry for industry, score in sorted_industries[:6]]
+        
+        # Ultimate fallback - broad industries most companies serve
+        return ["business services", "technology", "professional services", "small medium business", "enterprise", "startups"]
 
     # --------------------------------- PHASE 2: CLIENT QUERY GENERATION ---------------------------------
 
@@ -323,67 +359,142 @@ class ClientTrendAgent(BaseAgent):
         known_clients = profile.get("known_clients", [])[:5]
         partners = profile.get("partners", [])[:5] 
         company_sector = profile.get("sector", "")
+        company_description = profile.get("description", "")
+        core_products = profile.get("core_products", [])
+        business_model = profile.get("business_model", "")
         current_year = datetime.now().year
         
+        # Extract key business themes from company profile for dynamic query generation
+        business_themes = self._extract_business_themes(profile)
+        
         for industry in client_industries:
-            # DISRUPTIVE TECHNOLOGY TRENDS
-            disruptive_queries = [
-                f"{industry} AI disruption {current_year} market transformation",
-                f"{industry} emerging technologies disrupting business models",
-                f"{industry} automation replacing traditional processes",
-                f"{industry} new technology adoption trends {current_year}",
-                f"{industry} regulatory changes disrupting markets {current_year}"
+            # TECHNOLOGY DISRUPTION TRENDS (Dynamic based on company context)
+            tech_trends = [
+                f"{industry} technology transformation {current_year} emerging solutions",
+                f"{industry} digital innovation disrupting traditional methods",
+                f"{industry} automation trends changing operations {current_year}",
+                f"{industry} new technology adoption driving efficiency",
+                f"{industry} technological shifts market impact {current_year}"
             ]
             
-            # FUTURE-SHAPING BUSINESS MODEL SHIFTS
-            business_model_queries = [
-                f"{industry} subscription economy transformation trends",
-                f"{industry} platform business models disrupting incumbents",
-                f"{industry} direct-to-consumer DTC revolution trends",
-                f"{industry} marketplace economy disruption {current_year}",
-                f"{industry} API economy platform strategies"
+            # BUSINESS MODEL EVOLUTION (Dynamic based on company's business model)
+            if business_themes:
+                business_evolution = []
+                for theme in business_themes[:3]:  # Use top 3 themes
+                    business_evolution.extend([
+                        f"{industry} {theme} transformation trends {current_year}",
+                        f"{industry} companies adopting {theme} strategies",
+                        f"{industry} {theme} disrupting traditional approaches"
+                    ])
+            else:
+                # Fallback to generic business evolution queries
+                business_evolution = [
+                    f"{industry} business model innovation {current_year}",
+                    f"{industry} operational efficiency transformation trends",
+                    f"{industry} customer experience evolution {current_year}",
+                    f"{industry} cost reduction innovation strategies"
+                ]
+            
+            # MARKET DYNAMICS AND REGULATORY CHANGES
+            market_dynamics = [
+                f"{industry} regulatory changes market impact {current_year}",
+                f"{industry} compliance requirements transformation trends",
+                f"{industry} market consolidation competitive shifts",
+                f"{industry} supply chain innovation efficiency trends",
+                f"{industry} sustainability requirements business changes"
             ]
             
-            # CONSUMER BEHAVIOR REVOLUTIONS
-            behavior_queries = [
-                f"{industry} generation Z consumer behavior shifts",
-                f"{industry} remote work changing business demands",
-                f"{industry} sustainability ESG driving market changes",
-                f"{industry} personalization AI customer expectations"
+            # CUSTOMER BEHAVIOR AND EXPECTATIONS
+            customer_trends = [
+                f"{industry} customer expectations evolution {current_year}",
+                f"{industry} user experience transformation trends",
+                f"{industry} customer service innovation automated solutions",
+                f"{industry} personalization demands technology adoption"
             ]
             
-            queries.extend(disruptive_queries + business_model_queries + behavior_queries)
+            queries.extend(tech_trends + business_evolution + market_dynamics + customer_trends)
         
         # COMPETITOR-INFORMED QUERIES (using competitor intelligence)
         if competitors:
             for competitor in competitors[:3]:  # Top 3 competitors
-                competitor_queries = [
-                    f"{competitor} disrupting {' '.join(client_industries[:2])} market analysis",
-                    f"{competitor} vs traditional {client_industries[0] if client_industries else 'industry'} business models"
-                ]
-                queries.extend(competitor_queries)
+                if client_industries:
+                    competitor_queries = [
+                        f"{competitor} innovation trends {client_industries[0]} market impact",
+                        f"{competitor} transformation strategies industry analysis {current_year}"
+                    ]
+                    queries.extend(competitor_queries)
         
-        # KNOWN CLIENT INDUSTRY QUERIES (if specific clients are known)
+        # KNOWN CLIENT SPECIFIC QUERIES (if specific clients are known)
         if known_clients:
             for client in known_clients[:3]:
                 client_queries = [
-                    f"{client} industry transformation trends driving change",
-                    f"{client} market disruption challenges {current_year}"
+                    f"{client} industry challenges solutions {current_year}",
+                    f"{client} sector innovation trends transformation"
                 ]
                 queries.extend(client_queries)
         
-        # CROSS-SECTOR DISRUPTION (using company's own sector for cross-pollination)
+        # CROSS-SECTOR INNOVATION (using company's own sector for insights)
         if company_sector and client_industries:
             for client_industry in client_industries[:2]:
                 cross_sector_queries = [
-                    f"{company_sector} solutions disrupting {client_industry} traditional workflows",
-                    f"{client_industry} adopting {company_sector} innovations trends"
+                    f"{company_sector} innovations transforming {client_industry} operations",
+                    f"{client_industry} adopting {company_sector} solutions trends {current_year}"
                 ]
                 queries.extend(cross_sector_queries)
         
+        # PRODUCT/SERVICE SPECIFIC TRENDS (based on core products)
+        if core_products:
+            for product in core_products[:2]:
+                for industry in client_industries[:2]:
+                    product_queries = [
+                        f"{industry} {product} adoption trends {current_year}",
+                        f"{industry} demand for {product} solutions growing"
+                    ]
+                    queries.extend(product_queries)
+        
         # Remove duplicates and limit
         unique_queries = list(dict.fromkeys(queries))  # Preserve order while removing duplicates
-        return unique_queries[:20]  # Increased limit for comprehensive coverage
+        return unique_queries[:20]  # Comprehensive coverage
+    
+    def _extract_business_themes(self, profile: Dict[str, Any]) -> List[str]:
+        """Extract dynamic business themes from company profile for contextualized queries."""
+        themes = []
+        
+        description = profile.get("description", "").lower()
+        business_model = profile.get("business_model", "").lower()
+        core_products = [p.lower() for p in profile.get("core_products", [])]
+        
+        # Dynamic theme extraction based on company characteristics
+        theme_keywords = {
+            "cloud computing": ["cloud", "saas", "software-as-a-service", "infrastructure"],
+            "data analytics": ["analytics", "data", "insights", "intelligence", "reporting"],
+            "artificial intelligence": ["ai", "machine learning", "automation", "intelligent"],
+            "cybersecurity": ["security", "cybersecurity", "protection", "compliance"],
+            "mobile technology": ["mobile", "app", "smartphone", "device"],
+            "e-commerce": ["ecommerce", "online", "digital commerce", "retail"],
+            "fintech": ["financial", "payment", "banking", "finance"],
+            "healthcare tech": ["healthcare", "medical", "health", "patient"],
+            "education tech": ["education", "learning", "training", "course"],
+            "communication": ["communication", "messaging", "collaboration", "video"],
+            "workflow optimization": ["workflow", "process", "efficiency", "productivity"],
+            "integration": ["integration", "api", "connectivity", "interoperability"],
+            "real-time processing": ["real-time", "streaming", "instant", "live"],
+            "scalability": ["scalable", "scale", "growth", "enterprise"],
+            "user experience": ["user experience", "interface", "usability", "design"]
+        }
+        
+        # Check all text content for theme matches
+        all_text = f"{description} {business_model} {' '.join(core_products)}"
+        
+        for theme, keywords in theme_keywords.items():
+            if any(keyword in all_text for keyword in keywords):
+                themes.append(theme)
+        
+        # If no themes found, return generic business themes
+        if not themes:
+            themes = ["digital transformation", "operational efficiency", "customer experience"]
+        
+        return themes[:5]  # Return top 5 themes
 
     # --------------------------------- PHASE 3: CONCURRENT SEARCH ---------------------------------
 
