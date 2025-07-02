@@ -4,19 +4,8 @@ import asyncio
 
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph
-
-from .classes.state import InputState, ResearchState
-from .nodes.collector import Collector
-from .nodes.curator import Curator
-from .nodes.enricher import Enricher
-from .nodes.insight_synthesizer import InsightSynthesizer
-from .nodes.researchers import (
-    UnifiedResearcher,
-    SpecializedResearcher,
-)
-from .nodes.interest_inference_agent import InterestInferenceAgent
+from .classes.state import  ResearchState
 from .nodes.research_intent_planner import ResearchIntentPlanner
-from .nodes.query_composer import QueryComposer
 from .nodes.user_profile_enrichment_agent import UserProfileEnrichmentAgent
 from .nodes.executive_report_composer import ExecutiveReportComposer
 from .nodes.competitor_discovery_agent import EnhancedCompetitorDiscoveryAgent
@@ -36,11 +25,10 @@ competitor_modifications_pending: Dict[str, list] = {}
 
 class Graph:
     def __init__(self, company=None, url=None, user_role=None,
-                 websocket_manager=None, job_id=None, include_specialized_research=False,
+                 websocket_manager=None, job_id=None,
                  use_enhanced_profile_enrichment=True):
         self.websocket_manager = websocket_manager
         self.job_id = job_id
-        self.include_specialized_research = include_specialized_research
         self.use_enhanced_profile_enrichment = use_enhanced_profile_enrichment
         
         # Initialize ResearchState with default values from the state definition
@@ -62,32 +50,20 @@ class Graph:
 
     def _init_nodes(self):
         """Initialize all workflow nodes"""
-        # self.ground = GroundingNode()
-        self.unified_researcher = UnifiedResearcher()
-        self.collector = Collector()
-        self.curator = Curator()
-        self.enricher = Enricher()
-        self.insight_synthesizer = InsightSynthesizer()
         
-        # Add competitor discovery agent, competitor analyst agent, and trend agents
+        
         self.competitor_discovery_agent = EnhancedCompetitorDiscoveryAgent()
         self.competitor_analyst_agent = CompetitorAnalystAgent()
         self.sector_trend_agent = SectorTrendAgent()
         self.client_trend_agent = ClientTrendAgent()
         
-        # Add comprehensive report generator
         self.comprehensive_report_generator = ComprehensiveReportGenerator()
         
         self.profile_enrichment_agent = UserProfileEnrichmentAgent()
             
-        self.interest_inference_agent = InterestInferenceAgent()
         self.research_intent_planner = ResearchIntentPlanner()
-        self.query_composer = QueryComposer()
         self.executive_report_composer = ExecutiveReportComposer()
         
-        # Optional specialized researcher
-        if self.include_specialized_research:
-            self.specialized_researcher = SpecializedResearcher()
 
     def _should_review_competitors(self, state: Dict[str, Any]) -> str:
         """Decide whether we need a competitor review pause"""
@@ -96,7 +72,6 @@ class Graph:
         if competitors:
             job_id = state.get("job_id")
             if job_id:
-                # Keep a snapshot for debug purposes
                 pending_competitor_reviews[job_id] = state
                 logger.info(
                     f"Competitors discovered – user review required (job {job_id})"
@@ -114,7 +89,6 @@ class Graph:
         job_id = state.get("job_id")
         competitors = state.get("competitors", [])
 
-        # Format competitors for the frontend dialog
         competitor_objects = []
         for comp in competitors:
             if isinstance(comp, str):
@@ -130,7 +104,6 @@ class Graph:
             else:
                 competitor_objects.append(comp)
 
-        # Notify frontend that a review is required
         if websocket_manager and job_id:
             await websocket_manager.send_status_update(
                 job_id=job_id,
@@ -143,10 +116,8 @@ class Graph:
                 },
             )
 
-        # Prepare an asyncio.Event for this job (creates if missing)
         review_event = competitor_review_events.setdefault(job_id, asyncio.Event())
 
-        # Flag state so the outer loop / endpoints know we're waiting
         state["competitor_review_pending"] = True
 
         logger.info(

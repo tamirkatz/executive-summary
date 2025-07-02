@@ -163,7 +163,7 @@ function App() {
   // Modify the scroll helper function
   const scrollToStatus = () => {
     if (!hasScrolledToStatus && statusRef.current) {
-      const yOffset = -20; // Reduced negative offset to scroll further down
+      const yOffset = -20;
       const y =
         statusRef.current.getBoundingClientRect().top +
         window.pageYOffset +
@@ -202,7 +202,6 @@ function App() {
 
   // Add new state for PDF generation
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [, setPdfUrl] = useState<string | null>(null);
 
   const [isResetting, setIsResetting] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -249,8 +248,6 @@ function App() {
         streamingQueries: {},
         queries: [],
       });
-      setPdfUrl(null);
-      setCurrentPhase(null);
       setIsSearchPhase(false);
       setShouldShowQueries(false);
       setIsQueriesExpanded(true);

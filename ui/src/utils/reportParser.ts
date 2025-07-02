@@ -9,87 +9,87 @@ export const parseReportToCards = (
 
   const cards: ResearchCardData[] = [];
 
-  // Split the report by common section markers
+  // Split the report into blocks by top-level headings (#, ##, ###)
   const sections = reportContent
     .split(/(?=^#{1,3}\s)/gm)
-    .filter((section) => section.trim());
+    .filter((s) => s.trim());
 
-  sections.forEach((section, index) => {
-    // Extract title from markdown headers
-    const titleMatch = section.match(/^#{1,3}\s+(.+?)$/m);
-    const title = titleMatch ? titleMatch[1].trim() : `Section ${index + 1}`;
+  sections.forEach((section, sectionIndex) => {
+    // Track the latest competitor name if we encounter lines like **Stripe:**
+    let currentCompetitor: string | null = null;
 
-    // Remove the title from content
-    const content = section.replace(/^#{1,3}\s+.+?$/m, "").trim();
+    // Break section into individual lines for granular parsing
+    const lines = section.split(/\n+/g);
 
-    if (!content) return; // Skip empty sections
+    lines.forEach((rawLine, lineIndex) => {
+      const line = rawLine.trim();
+      if (!line) return;
 
-    // Look for bullet points or key insights
-    const bulletPoints = content.match(/^[-*•]\s+(.+?)(?=\n[-*•]|\n\n|$)/gm);
+      // Detect a competitor label like **Stripe:** or **Adyen:**
+      const competitorMatch = line.match(/^\*\*(.+?)\*\*:/);
+      if (competitorMatch) {
+        currentCompetitor = competitorMatch[1].trim();
+        return; // move to next line – nothing to card yet
+      }
 
-    if (bulletPoints && bulletPoints.length > 0) {
-      // Create individual cards for each bullet point
-      bulletPoints.forEach((bullet, bulletIndex) => {
-        const bulletContent = bullet.replace(/^[-*•]\s+/, "").trim();
+      // Detect bullet points that start with -, *, or •
+      const bulletMatch = line.match(/^[-*•]\s+(.*)/);
+      if (!bulletMatch) return; // not a bullet
 
-        // Extract the main topic (everything before the first colon)
-        const colonIndex = bulletContent.indexOf(":");
-        const bulletTitle =
-          colonIndex > 0
-            ? bulletContent.substring(0, colonIndex).trim()
-            : `${title} - Point ${bulletIndex + 1}`;
+      const bulletContent = bulletMatch[1].trim();
 
-        const bulletDescription =
-          colonIndex > 0
-            ? bulletContent.substring(colonIndex + 1).trim()
-            : bulletContent;
+      // Inside a bullet, look for bold title followed by colon (**Title:** description)
+      let bulletTitle = "";
+      let bulletDescription = bulletContent;
+      const boldTitleMatch = bulletContent.match(/^\*\*(.+?)\*\*:\s*(.+)/);
+      if (boldTitleMatch) {
+        bulletTitle = boldTitleMatch[1].trim();
+        bulletDescription = boldTitleMatch[2].trim();
+      } else {
+        // Fallback: split by first colon if present
+        const colonIdx = bulletContent.indexOf(":");
+        if (colonIdx > 0) {
+          bulletTitle = bulletContent.substring(0, colonIdx).trim();
+          bulletDescription = bulletContent.substring(colonIdx + 1).trim();
+        } else {
+          bulletTitle = bulletContent;
+        }
+      }
 
-        cards.push({
-          id: `${index}-${bulletIndex}`,
-          title: bulletTitle,
-          summary:
-            bulletDescription.length > 150
-              ? bulletDescription.substring(0, 150) + "..."
-              : bulletDescription,
-          content: bulletDescription,
-          chatHistory: [] as ChatMessage[],
-        });
-      });
-    } else {
-      // Create a single card for the entire section
-      const summary =
-        content.length > 200 ? content.substring(0, 200) + "..." : content;
+      // Compose full title with competitor context if available
+      const fullTitle = currentCompetitor
+        ? `${currentCompetitor} ${bulletTitle}`
+        : bulletTitle;
 
+      // Push card representing this leaf bullet point
       cards.push({
-        id: `section-${index}`,
-        title,
-        summary,
-        content,
+        id: `${sectionIndex}-${lineIndex}`,
+        title: fullTitle,
+        summary:
+          bulletDescription.length > 150
+            ? bulletDescription.substring(0, 150) + "..."
+            : bulletDescription,
+        content: bulletDescription,
         chatHistory: [] as ChatMessage[],
       });
-    }
+    });
   });
 
-  // If no sections were found, try to parse by paragraphs
+  // If no leaf cards detected, fall back to previous paragraph/section parsing (rare)
   if (cards.length === 0) {
     const paragraphs = reportContent.split(/\n\s*\n/).filter((p) => p.trim());
-
     paragraphs.forEach((paragraph, index) => {
-      if (paragraph.trim().length < 50) return; // Skip very short paragraphs
-
-      // Try to extract a title from the first sentence
+      if (paragraph.trim().length < 50) return;
       const sentences = paragraph.split(/[.!?]+/);
       const firstSentence = sentences[0]?.trim();
       const title =
         firstSentence && firstSentence.length < 100
           ? firstSentence
           : `Research Point ${index + 1}`;
-
       const summary =
         paragraph.length > 200
           ? paragraph.substring(0, 200) + "..."
           : paragraph;
-
       cards.push({
         id: `paragraph-${index}`,
         title,

@@ -5,7 +5,6 @@ import {
   ChatMessage,
   GlassStyle,
 } from "../types";
-import { Link } from "react-router-dom";
 import ResearchReport from "./ResearchReport";
 import { parseReportToCards, addMessageToCard } from "../utils/reportParser";
 
@@ -141,25 +140,6 @@ const EnhancedResearchReport: React.FC<EnhancedResearchReportProps> = ({
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Research Results
         </h2>
-        <p className="text-gray-600">
-          Click on a section below to deep dive into more details.
-        </p>
-
-        {/* Deep Dive Links */}
-        {cards.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {cards.map((card) => (
-              <Link
-                key={card.id}
-                to={`/deep-dive/${card.id}`}
-                state={{ card }}
-                className="px-3 py-1.5 rounded-lg bg-[#468BFF] text-white text-sm hover:bg-[#8FBCFA] transition-colors"
-              >
-                {card.title}
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Always show the full report below */}
@@ -173,7 +153,6 @@ const EnhancedResearchReport: React.FC<EnhancedResearchReportProps> = ({
         isCopied={isCopied}
         onCopyToClipboard={onCopyToClipboard}
         onGeneratePdf={onGeneratePdf}
-        cards={cards}
       />
     </div>
   );

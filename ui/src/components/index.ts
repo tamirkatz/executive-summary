@@ -4,7 +4,6 @@ export { default as LocationInput } from "./LocationInput";
 export { default as ResearchStatus } from "./ResearchStatus";
 export { default as ResearchForm } from "./ResearchForm";
 export { default as CompetitorReview } from "./CompetitorReview";
-export { default as ResearchCard } from "./ResearchCard";
 export { default as ResearchCardGrid } from "./ResearchCardGrid";
 export { default as ChatHistory } from "./ChatHistory";
 export { default as ChatInput } from "./ChatInput";

@@ -119,30 +119,13 @@ const ResearchReport: React.FC<ResearchReportProps> = ({
                   .join("")
                   .trim();
 
-                const cardMatch = cards.find(
-                  (c) => c.title.toLowerCase() === headingText.toLowerCase()
-                );
-
                 return (
-                  <div className="relative group inline-block">
-                    <h2
-                      className="text-3xl font-bold text-gray-900 first:mt-2 mt-8 mb-4"
-                      {...props}
-                    >
-                      {children}
-                    </h2>
-                    {cardMatch && (
-                      <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10">
-                        <Link
-                          to={`/deep-dive/${cardMatch.id}`}
-                          state={{ card: cardMatch }}
-                          className="px-3 py-1.5 rounded-lg bg-[#468BFF] text-white text-sm shadow-lg hover:bg-[#8FBCFA] transition-colors"
-                        >
-                          Deep Dive →
-                        </Link>
-                      </div>
-                    )}
-                  </div>
+                  <h2
+                    className="text-3xl font-bold text-gray-900 first:mt-2 mt-8 mb-4"
+                    {...props}
+                  >
+                    {children}
+                  </h2>
                 );
               },
               h3: ({ node, children, ...props }) => {
@@ -151,30 +134,13 @@ const ResearchReport: React.FC<ResearchReportProps> = ({
                   .join("")
                   .trim();
 
-                const cardMatch = cards.find(
-                  (c) => c.title.toLowerCase() === headingText.toLowerCase()
-                );
-
                 return (
-                  <div className="relative group inline-block">
-                    <h3
-                      className="text-xl font-semibold text-gray-900 mt-6 mb-3"
-                      {...props}
-                    >
-                      {children}
-                    </h3>
-                    {cardMatch && (
-                      <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10">
-                        <Link
-                          to={`/deep-dive/${cardMatch.id}`}
-                          state={{ card: cardMatch }}
-                          className="px-3 py-1.5 rounded-lg bg-[#468BFF] text-white text-sm shadow-lg hover:bg-[#8FBCFA] transition-colors"
-                        >
-                          Deep Dive →
-                        </Link>
-                      </div>
-                    )}
-                  </div>
+                  <h3
+                    className="text-xl font-semibold text-gray-900 mt-6 mb-3"
+                    {...props}
+                  >
+                    {children}
+                  </h3>
                 );
               },
               p: ({ node, children, ...props }) => {
