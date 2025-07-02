@@ -153,12 +153,6 @@ class ComprehensiveReportGenerator(BaseAgent):
         
         [Specific developments in AI-driven commerce, autonomous agents, workflow automation]
         
-        ### API Economy & Integration Trends
-        [Platform integrations, API-first strategies, ecosystem developments like Stripe's MCP]
-        
-        ### Payment Technology Evolution
-        [Specific innovations in payment processing, fintech developments, regulatory changes]
-        
         ### Market Size & Growth Data
         [Specific market metrics, growth projections, segment analysis]
         
