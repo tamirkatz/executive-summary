@@ -2,9 +2,12 @@
 export { default as Header } from "./Header";
 export { default as LocationInput } from "./LocationInput";
 export { default as ResearchStatus } from "./ResearchStatus";
-export { default as ResearchReport } from "./ResearchReport";
 export { default as ResearchForm } from "./ResearchForm";
-export { default as ReportCard } from "./ReportCard";
-export { default as ReportCardsView } from "./ReportCardsView";
-export { default as ReportPreview } from "./ReportPreview";
 export { default as CompetitorReview } from "./CompetitorReview";
+export { default as ResearchCard } from "./ResearchCard";
+export { default as ResearchCardGrid } from "./ResearchCardGrid";
+export { default as ChatHistory } from "./ChatHistory";
+export { default as ChatInput } from "./ChatInput";
+export { default as ViewToggle } from "./ViewToggle";
+export { default as EnhancedResearchReport } from "./EnhancedResearchReport";
+export { default as ResearchReport } from "./ResearchReport";

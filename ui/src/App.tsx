@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "./components/Header";
-import ResearchBriefings from "./components/ResearchBriefings";
-import ResearchQueries from "./components/ResearchQueries";
 import ResearchStatus from "./components/ResearchStatus";
-import ResearchReport from "./components/ResearchReport";
+import EnhancedResearchReport from "./components/EnhancedResearchReport";
+import { askQuestionAboutCard } from "./utils/chatApi";
 import ResearchForm from "./components/ResearchForm";
 import CompetitorReview from "./components/CompetitorReview";
 import {
@@ -16,27 +15,121 @@ import {
   Competitor,
 } from "./types";
 import { checkForFinalReport } from "./utils/handlers";
-import {
-  colorAnimation,
-  dmSansStyle,
-  glassStyle,
-  fadeInAnimation,
-} from "./styles";
 
+// Enhanced styling with modern gradients and effects
+const modernColorAnimation = `
+@keyframes modernColorFlow {
+  0% { stroke: #2563eb; }
+  20% { stroke: #4f46e5; }
+  40% { stroke: #7c3aed; }
+  60% { stroke: #6366f1; }
+  80% { stroke: #3b82f6; }
+  100% { stroke: #2563eb; }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { 
+    transform: translateY(0px);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-modern-colors {
+  animation: modernColorFlow 6s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: subtleFloat 4s ease-in-out infinite;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+.loader-icon {
+  transition: stroke 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modern glass morphism */
+.glass-modern {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.glass-card-modern {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+`;
+
+const dmSansStyle = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+  
+  body {
+    font-family: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+`;
+
+// Enhanced glass styles
+const enhancedGlassStyle = {
+  base: "glass-modern",
+  card: "glass-card-modern rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300",
+  input:
+    "bg-white/95 border border-gray-100 shadow-sm pl-12 w-full rounded-xl py-3 px-4 text-gray-900 focus:border-blue-400/50 focus:outline-none focus:ring-2 focus:ring-blue-400/30 placeholder-gray-500 transition-all duration-300",
+};
+
+const fadeInAnimation = {
+  fadeIn: "transition-all duration-500 ease-out transform",
+  writing: "animate-pulse",
+  colorTransition: modernColorAnimation,
+};
+
+// Resolve backend endpoints from env vars first, then fall back to the current
+// page origin/host so the same build works in dev (localhost) and prod.
 const API_URL =
-  "http://executivemarketintelligence-env.eba-jkhm5m5n.eu-north-1.elasticbeanstalk.com";
-const WS_URL =
-  "executivemarketintelligence-env.eba-jkhm5m5n.eu-north-1.elasticbeanstalk.com";
+  (import.meta.env.VITE_API_URL as string) || window.location.origin;
 
-if (!API_URL || !WS_URL) {
-  throw new Error(
-    "Environment variables VITE_API_URL and VITE_WS_URL must be set"
+// WebSocket host (protocol is added later in buildWsUrl).
+const WS_URL = (import.meta.env.VITE_WS_URL as string) || window.location.host;
+
+// Optional sanity-check – warn (don't crash) if not explicitly set
+if (!import.meta.env.VITE_API_URL || !import.meta.env.VITE_WS_URL) {
+  console.warn(
+    "VITE_API_URL / VITE_WS_URL not provided – falling back to current origin"
   );
 }
 
-// Add styles to document head
+// Add enhanced styles to document head
 const colorStyle = document.createElement("style");
-colorStyle.textContent = colorAnimation;
+colorStyle.textContent = modernColorAnimation;
 document.head.appendChild(colorStyle);
 
 const dmSansStyleElement = document.createElement("style");
@@ -114,28 +207,28 @@ function App() {
   const [isResetting, setIsResetting] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Add new state for color cycling
-  const [loaderColor, setLoaderColor] = useState("#468BFF");
+  // Enhanced color cycling with modern palette
+  const [loaderColor, setLoaderColor] = useState("#6366f1");
 
-  // Add useEffect for color cycling
+  // Add useEffect for modern color cycling
   useEffect(() => {
     if (!isResearching) return;
 
-    const colors = [
-      "#468BFF", // Blue
-      "#8FBCFA", // Light Blue
-      "#FE363B", // Red
-      "#FF9A9D", // Light Red
-      "#FDBB11", // Yellow
-      "#F6D785", // Light Yellow
+    const modernColors = [
+      "#6366f1", // Indigo
+      "#8b5cf6", // Violet
+      "#ec4899", // Pink
+      "#f59e0b", // Amber
+      "#10b981", // Emerald
+      "#3b82f6", // Blue
     ];
 
     let currentIndex = 0;
 
     const interval = setInterval(() => {
-      currentIndex = (currentIndex + 1) % colors.length;
-      setLoaderColor(colors[currentIndex]);
-    }, 1000);
+      currentIndex = (currentIndex + 1) % modernColors.length;
+      setLoaderColor(modernColors[currentIndex]);
+    }, 1200);
 
     return () => clearInterval(interval);
   }, [isResearching]);
@@ -167,7 +260,7 @@ function App() {
       setShowCompetitorReview(false);
       setDiscoveredCompetitors([]);
       setCurrentJobId("");
-    }, 300); // Match this with CSS transition duration
+    }, 400); // Slightly longer for smoother transitions
   };
 
   const handleCompetitorConfirm = async (modifiedCompetitors: Competitor[]) => {
@@ -198,31 +291,33 @@ function App() {
         setIsComplete(false); // Ensure not marked as complete
         console.log("✅ Competitors confirmed, Phase 2 starting...");
       } else {
-        console.error("❌ Failed to submit competitor modifications");
-        setError("Failed to submit competitor modifications");
+        throw new Error("Failed to confirm competitors");
       }
     } catch (error) {
-      console.error("❌ Error submitting competitor modifications:", error);
-      setError("Error submitting competitor modifications");
+      console.error("❌ Error confirming competitors:", error);
+      setError("Failed to confirm competitors. Please try again.");
     }
   };
 
   const handleCompetitorCancel = () => {
+    console.log("❌ User cancelled competitor selection");
     setShowCompetitorReview(false);
-    // Optionally restart research or return to form
-    resetResearch();
+    setCurrentPhase(null);
+    setIsResearching(false);
   };
 
   const connectWebSocket = (jobId: string) => {
     console.log("Initializing WebSocket connection for job:", jobId);
 
-    // Use the WS_URL directly if it's a full URL, otherwise construct it
-    const wsUrl =
-      WS_URL.startsWith("wss://") || WS_URL.startsWith("ws://")
-        ? `${WS_URL}/research/ws/${jobId}`
-        : `${
-            window.location.protocol === "https:" ? "wss:" : "ws:"
-          }//${WS_URL}/research/ws/${jobId}`;
+    // Helper to build a WebSocket URL that always matches the security context
+    const buildWsUrl = (baseUrl: string, jobId: string) => {
+      // Strip any leading protocol so we can safely prepend the correct one
+      const host = baseUrl.replace(/^(https?:\/\/|wss?:\/\/)/, "");
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      return `${protocol}//${host}/research/ws/${jobId}`;
+    };
+
+    const wsUrl = buildWsUrl(WS_URL, jobId);
 
     console.log("Connecting to WebSocket URL:", wsUrl);
 
@@ -372,28 +467,35 @@ function App() {
             });
           }
 
-          // Handle completion (final completion only)
+          // Handle completion – only mark flow complete when a report is present
           if (statusData.status === "completed") {
-            console.log("✅ Research completed successfully");
-            setCurrentPhase("complete");
-            setIsComplete(true);
-            setIsResearching(false);
-            setStatus({
-              step: "Complete",
-              message: "Research completed successfully",
-            });
-            setOutput({
-              summary: "",
-              details: {
-                report: statusData.result?.report || "",
-              },
-            });
-            setHasFinalReport(true);
+            if (!statusData.result?.report) {
+              // Intermediate component-level completion – ignore
+              console.log(
+                "⚠️ Received 'completed' status without report – treating as intermediate step"
+              );
+            } else {
+              console.log("✅ Research completed successfully");
+              setCurrentPhase("complete");
+              setIsComplete(true);
+              setIsResearching(false);
+              setStatus({
+                step: "Complete",
+                message: "Research completed successfully",
+              });
+              setOutput({
+                summary: "",
+                details: {
+                  report: statusData.result.report,
+                },
+              });
+              setHasFinalReport(true);
 
-            // Clear polling interval if it exists
-            if (pollingIntervalRef.current) {
-              clearInterval(pollingIntervalRef.current);
-              pollingIntervalRef.current = null;
+              // Clear polling interval if it exists
+              if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+              }
             }
           }
 
@@ -952,105 +1054,6 @@ function App() {
     }
   };
 
-  // Add new function to handle copying to clipboard
-  const handleCopyToClipboard = async () => {
-    if (!output?.details?.report) return;
-
-    try {
-      await navigator.clipboard.writeText(output.details.report);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
-    } catch (err) {
-      console.error("Failed to copy text: ", err);
-      setError("Failed to copy to clipboard");
-    }
-  };
-
-  // Function to render progress components in order
-  const renderProgressComponents = () => {
-    console.log("🎨 Rendering progress components:", {
-      hasOutput: !!output,
-      currentPhase,
-      shouldShowQueries,
-      queriesCount: researchState.queries.length,
-      streamingQueriesCount: Object.keys(researchState.streamingQueries).length,
-      briefingStatus: {
-        company: researchState.company,
-        financial: researchState.financial,
-        news: researchState.news,
-      },
-    });
-
-    const components = [];
-
-    // Research Report (always at the top when available)
-    if (output && output.details) {
-      console.log("📄 Rendering ResearchReport component");
-      components.push(
-        <ResearchReport
-          key="report"
-          output={{
-            summary: output.summary,
-            details: {
-              report: output.details.report || "",
-            },
-          }}
-          isResetting={isResetting}
-          glassStyle={glassStyle}
-          fadeInAnimation={fadeInAnimation}
-          loaderColor={loaderColor}
-          isGeneratingPdf={isGeneratingPdf}
-          isCopied={isCopied}
-          onCopyToClipboard={handleCopyToClipboard}
-          onGeneratePdf={handleGeneratePdf}
-        />
-      );
-    }
-
-    // Current phase component
-    if (
-      currentPhase === "briefing" ||
-      (currentPhase === "complete" &&
-        researchState.company &&
-        researchState.financial &&
-        researchState.news)
-    ) {
-      console.log("📝 Rendering ResearchBriefings component");
-      components.push(
-        <ResearchBriefings
-          key="briefing"
-          briefingStatus={researchState}
-          isExpanded={isBriefingExpanded}
-          onToggleExpand={() => setIsBriefingExpanded(!isBriefingExpanded)}
-          glassStyle={glassStyle.base}
-        />
-      );
-    }
-
-    // Queries are always at the bottom when visible
-    if (
-      shouldShowQueries &&
-      (researchState.queries.length > 0 ||
-        Object.keys(researchState.streamingQueries).length > 0)
-    ) {
-      console.log("🔍 Rendering ResearchQueries component");
-      components.push(
-        <ResearchQueries
-          key="queries"
-          queries={researchState.queries}
-          streamingQueries={researchState.streamingQueries}
-          isExpanded={isQueriesExpanded}
-          onToggleExpand={() => setIsQueriesExpanded(!isQueriesExpanded)}
-          isResetting={isResetting}
-          glassStyle={glassStyle.base}
-        />
-      );
-    }
-
-    console.log("🎨 Total components to render:", components.length);
-    return components;
-  };
-
   // Add cleanup for polling interval
   useEffect(() => {
     return () => {
@@ -1103,61 +1106,115 @@ function App() {
     }
   }, [status]);
 
+  // Handler to copy the generated report to the clipboard
+  const handleCopyToClipboard = async () => {
+    if (output?.details?.report) {
+      try {
+        await navigator.clipboard.writeText(output.details.report);
+        setIsCopied(true);
+        // Reset the copied state after a short delay for user feedback
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+        console.error("❌ Failed to copy report to clipboard:", err);
+        setError("Failed to copy report to clipboard");
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white p-8 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(70,139,255,0.35)_1px,transparent_0)] bg-[length:24px_24px] bg-center"></div>
-      <div className="max-w-5xl mx-auto space-y-8 relative">
-        {/* Header Component */}
-        <Header glassStyle={glassStyle.card} />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-slate-50 to-white">
+      {/* Modern Abstract Background */}
+      <div className="absolute inset-0">
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(37, 99, 235, 0.05) 1px, transparent 0)`,
+            backgroundSize: "40px 40px",
+          }}
+        ></div>
 
-        {/* Form Section */}
-        <ResearchForm
-          onSubmit={handleFormSubmit}
-          isResearching={isResearching}
-          glassStyle={glassStyle}
-          loaderColor={loaderColor}
-        />
-
-        {/* Error Message */}
-        {error && (
-          <div
-            className={`${
-              glassStyle.card
-            } border-[#FE363B]/30 bg-[#FE363B]/10 ${fadeInAnimation.fadeIn} ${
-              isResetting
-                ? "opacity-0 transform -translate-y-4"
-                : "opacity-100 transform translate-y-0"
-            } font-['DM_Sans']`}
-          >
-            <p className="text-[#FE363B]">{error}</p>
-          </div>
-        )}
-
-        {/* Status Box */}
-        <ResearchStatus
-          status={status}
-          error={error}
-          isComplete={isComplete}
-          currentPhase={currentPhase}
-          isResetting={isResetting}
-          glassStyle={glassStyle}
-          loaderColor={loaderColor}
-          statusRef={statusRef}
-        />
-
-        {/* Progress Components Container */}
-        <div className="space-y-12 transition-all duration-500 ease-in-out">
-          {renderProgressComponents()}
+        {/* Soft gradient shapes */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
+          <div className="absolute -top-1/2 -left-1/4 w-full h-full bg-blue-50/40 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-1/2 -right-1/4 w-full h-full bg-indigo-50/40 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-violet-50/30 rounded-full blur-2xl"></div>
         </div>
+      </div>
 
-        {/* Competitor Review Modal */}
-        <CompetitorReview
-          competitors={discoveredCompetitors}
-          onConfirm={handleCompetitorConfirm}
-          onCancel={handleCompetitorCancel}
-          isVisible={showCompetitorReview}
-          glassStyle={glassStyle}
-        />
+      {/* Main content */}
+      <div className="relative z-10 px-6 py-12 lg:px-8 lg:py-16">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <Header />
+
+          {/* Enhanced Form Section */}
+          <div className="mt-16">
+            <div className={`${enhancedGlassStyle.card} max-w-4xl mx-auto`}>
+              <ResearchForm
+                onSubmit={handleFormSubmit}
+                isResearching={isResearching}
+                glassStyle={enhancedGlassStyle}
+                loaderColor={loaderColor}
+              />
+            </div>
+          </div>
+
+          {/* Enhanced Error Message */}
+          {error && (
+            <div className="mt-8 max-w-4xl mx-auto">
+              <div
+                className={`${enhancedGlassStyle.card} border-red-100 bg-red-50/80`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <p className="text-red-700 font-medium">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Status Box */}
+          <div className="mt-8 max-w-4xl mx-auto">
+            <ResearchStatus
+              status={status}
+              error={error}
+              isComplete={isComplete}
+              currentPhase={currentPhase}
+              isResetting={isResetting}
+              glassStyle={enhancedGlassStyle}
+              loaderColor={loaderColor}
+              statusRef={statusRef}
+            />
+          </div>
+
+          {/* Competitor Review Modal */}
+          <CompetitorReview
+            competitors={discoveredCompetitors}
+            onConfirm={handleCompetitorConfirm}
+            onCancel={handleCompetitorCancel}
+            isVisible={showCompetitorReview}
+            glassStyle={enhancedGlassStyle}
+          />
+
+          {/* Final Research Report */}
+          {output?.details?.report && (
+            <div className="mt-12 max-w-7xl mx-auto">
+              <EnhancedResearchReport
+                output={output as ResearchOutput}
+                isResetting={isResetting}
+                glassStyle={enhancedGlassStyle}
+                fadeInAnimation={fadeInAnimation}
+                loaderColor={loaderColor}
+                isGeneratingPdf={isGeneratingPdf}
+                isCopied={isCopied}
+                onCopyToClipboard={handleCopyToClipboard}
+                onGeneratePdf={handleGeneratePdf}
+                onAskQuestion={askQuestionAboutCard}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

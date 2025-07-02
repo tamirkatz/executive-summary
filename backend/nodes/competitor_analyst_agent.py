@@ -48,7 +48,7 @@ class CompetitorAnalystAgent(BaseAgent):
         
         self.llm_model = llm_model
         self.temperature = 0.1
-        self.rate_limit = 12  # Increased concurrent requests for faster processing
+        self.rate_limit = 4  # Lowered to reduce API rate-limit errors
         self.days_back = 180  # Reduced to 6 months for more focused recent news
         
         if not os.getenv("TAVILY_API_KEY"):
@@ -79,6 +79,13 @@ class CompetitorAnalystAgent(BaseAgent):
         try:
             # Extract competitors from state
             competitors = state.get("competitors", [])
+
+            # Ensure manually added competitors are prioritised so they are not accidentally
+            # truncated by the cap below. Manual competitors are tagged with category "manual".
+            manual_competitors = [c for c in competitors if isinstance(c, dict) and c.get("category") == "manual"]
+            other_competitors = [c for c in competitors if c not in manual_competitors]
+            competitors = manual_competitors + other_competitors
+            
             if not competitors:
                 # Fallback to competitor_discovery data
                 competitor_discovery = state.get("competitor_discovery", {})
@@ -221,6 +228,13 @@ class CompetitorAnalystAgent(BaseAgent):
                 # Get the first result as likely official website
                 website_url = website_search["results"][0]["url"]
                 
+                # If the Tavily client does not support the experimental `crawl` endpoint (older SDK),
+                # skip website crawling to avoid runtime errors. A warning is logged so that the
+                # maintainer knows to upgrade `tavily_python`.
+                if not hasattr(self.tavily, "crawl"):
+                    self.logger.warning("Tavily client has no `crawl` method – skipping website crawl for %s", competitor_name)
+                    return []
+
                 # Fast, focused crawl - minimal depth and breadth
                 crawl_result = await self.tavily.crawl(
                     url=website_url,
@@ -263,15 +277,34 @@ class CompetitorAnalystAgent(BaseAgent):
         for query in news_queries:
             try:
                 async with self.sem:
-                    results = await self.tavily.search(
-                        query=query,
-                        search_depth="basic",  # Reduced from advanced
-                        max_results=3,  # Reduced from 5
-                        include_domains=self.trusted_sources,
-                        topic="news",
-                        days=self.days_back,
-                        include_answer=True
-                    )
+                    max_attempts = 3
+                    delay = 5
+                    attempt = 0
+                    while attempt < max_attempts:
+                        try:
+                            results = await self.tavily.search(
+                                query=query,
+                                search_depth="basic",  # Reduced from advanced
+                                max_results=3,  # Reduced from 5
+                                include_domains=self.trusted_sources,
+                                topic="news",
+                                days=self.days_back,
+                                include_answer=True
+                            )
+                            break  # Success
+                        except Exception as e_inner:
+                            err_msg = str(e_inner).lower()
+                            if "excessive requests" in err_msg or "rate" in err_msg:
+                                attempt += 1
+                                if attempt < max_attempts:
+                                    wait = delay * attempt
+                                    self.logger.warning(
+                                        f"Rate limit hit on Tavily news search (attempt {attempt}/{max_attempts}) – retrying in {wait}s"
+                                    )
+                                    await asyncio.sleep(wait)
+                                    continue
+                            # Other errors – re-raise to outer except
+                            raise e_inner
                     
                     if results and results.get("results"):
                         for result in results["results"]:
@@ -296,14 +329,33 @@ class CompetitorAnalystAgent(BaseAgent):
         # Single focused query for speed
         try:
             async with self.sem:
-                results = await self.tavily.search(
-                    query=f'"{competitor_name}" product launch OR acquisition OR partnership',
-                    search_depth="basic",
-                    max_results=3,  # Reduced significantly
-                    include_domains=["medium.com", "techcrunch.com"],  # Reduced domains
-                    days=self.days_back,
-                    include_answer=True
-                )
+                max_attempts = 3
+                delay = 5
+                attempt = 0
+                results = None
+                while attempt < max_attempts:
+                    try:
+                        results = await self.tavily.search(
+                            query=f'"{competitor_name}" product launch OR acquisition OR partnership',
+                            search_depth="basic",
+                            max_results=3,  # Reduced significantly
+                            include_domains=["medium.com", "techcrunch.com"],  # Reduced domains
+                            days=self.days_back,
+                            include_answer=True
+                        )
+                        break
+                    except Exception as e_inner:
+                        err_msg = str(e_inner).lower()
+                        if "excessive requests" in err_msg or "rate" in err_msg:
+                            attempt += 1
+                            if attempt < max_attempts:
+                                wait = delay * attempt
+                                self.logger.warning(
+                                    f"Rate limit hit on Tavily blog search (attempt {attempt}/{max_attempts}) – retrying in {wait}s"
+                                )
+                                await asyncio.sleep(wait)
+                                continue
+                        raise e_inner
                 
                 blog_data = []
                 if results and results.get("results"):

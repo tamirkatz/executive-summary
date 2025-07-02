@@ -6,7 +6,6 @@ from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph
 
 from .classes.state import InputState, ResearchState
-from .nodes import GroundingNode
 from .nodes.collector import Collector
 from .nodes.curator import Curator
 from .nodes.enricher import Enricher

@@ -101,5 +101,59 @@ export type ResearchQueriesProps = {
   isExpanded: boolean;
   onToggleExpand: () => void;
   isResetting: boolean;
-  glassStyle: string;
+  glassStyle: GlassStyle;
 };
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface ResearchCardData {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  chatHistory: ChatMessage[];
+}
+
+export interface ResearchCardProps {
+  data: ResearchCardData;
+  onAskQuestion?: (
+    cardId: string,
+    question: string,
+    cardContent: string
+  ) => Promise<string>;
+  onRemove?: (cardId: string) => void;
+  className?: string;
+  initialWidth?: number;
+  initialHeight?: number;
+  minWidth?: number;
+  minHeight?: number;
+}
+
+export interface ChatInputProps {
+  onSubmit: (message: string) => Promise<void>;
+  disabled?: boolean;
+}
+
+export interface ChatHistoryProps {
+  messages: ChatMessage[];
+  className?: string;
+}
+
+export type ViewMode = "report" | "cards";
+
+export interface ReportPoint {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+}
+
+export interface ViewToggleProps {
+  currentView: ViewMode;
+  onViewChange: (view: ViewMode) => void;
+  className?: string;
+}
