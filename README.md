@@ -1,4 +1,6 @@
-# Weekly Market Research Agent 🔍
+Strategic Market Briefing 🔍
+
+### 🔗 [App is live !](https://app.strategicoverview.net/)
 
 💡 **Inspiration**
 
