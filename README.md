@@ -1,479 +1,254 @@
+# Company Research Agent 🔍
 
+A sophisticated AI-powered company research platform that provides comprehensive competitive intelligence and market analysis through multi-agent workflows.
 
-# Agentic Company Researcher 🔍
+## ✨ Features
 
-![web ui](static/ui-1.png)
+- **🤖 Multi-Agent AI Research**: Specialized AI agents for different aspects of company research
+- **🏢 Competitor Discovery**: Automated identification and analysis of competitors
+- **📊 Market Intelligence**: Sector trends, client analysis, and competitive positioning
+- **⚡ Real-time Updates**: Live progress tracking via WebSocket connections
+- **📄 PDF Report Generation**: Professional reports with comprehensive insights
+- **🔄 Interactive Review**: Human-in-the-loop competitor validation and modification
+- **🌐 Modern UI**: React-based interface with real-time collaboration features
 
-A multi-agent tool that generates comprehensive company research reports. The platform uses a pipeline of AI agents to gather, curate, and synthesize information about any company.
+## 🏗️ Architecture
 
-✨Live Demo: https://app.strategicoverview.net/ ✨
+### Backend (Python + FastAPI + LangGraph)
 
-https://github.com/user-attachments/assets/0e373146-26a7-4391-b973-224ded3182a9
+- **FastAPI**: High-performance API server with WebSocket support
+- **LangGraph**: Orchestrates multi-agent AI workflows
+- **MongoDB**: Persistent storage for research data and job tracking
+- **PDF Generation**: Automated report creation with ReportLab
 
-## Table of Contents
+### Frontend (React + TypeScript + Vite)
 
-1. [Objectives](#objectives)
-2. [Features](#features)
-3. [Live Demo](#live-demo)
-4. [Agent Framework](#agent-framework)
-5. [API Integration](#api-integration)
-6. [Setup](#setup)
-7. [Usage](#usage)
-8. [Example Outputs](#example-outputs)
-9. [Contributing](#contributing)
+- **React 18**: Modern component-based UI
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **Framer Motion**: Smooth animations and transitions
+- **React Router**: Client-side routing
 
-## Objectives
+### AI Agents
 
-This project aims to **democratize access to high-quality company intelligence** by automating and accelerating the research process.
+1. **Research Intent Planner**: Analyzes research requirements
+2. **User Profile Enrichment Agent**: Enhances user context and preferences
+3. **Competitor Discovery Agent**: Identifies relevant competitors using AI-powered search
+4. **Competitor Analyst Agent**: Deep-dive analysis of discovered competitors
+5. **Sector Trend Agent**: Industry and market trend analysis
+6. **Client Trend Agent**: Customer behavior and market dynamics
+7. **Comprehensive Report Generator**: Synthesizes all research into final reports
 
-1. Automate time-consuming desk research using a network of expert AI agents.
-2. Aggregate and filter data from heterogeneous sources to surface trustworthy insights.
-3. Produce executive-ready, richly formatted reports in minutes instead of hours.
-4. Enable iterative, interactive research where users can refine competitor lists and questions on-the-fly.
+## 🚀 Quick Start
 
-## Live Demo
+### Prerequisites
 
-A production deployment is hosted at **[app.strategicoverview.net](https://app.strategicoverview.net/)**.
+- **Node.js** >= 14.x
+- **Python** >= 3.8
+- **MongoDB** instance (local or MongoDB Atlas)
+- **API Keys**:
+  - OpenAI API key
+  - Tavily API key (for web search)
 
-➜ Open the link, enter a company name (e.g., "Tesla, Inc."), and watch the agents work in real-time. You can download the final report as Markdown or PDF when it completes.
-
-## Features
-
-- **Multi-Source Research**: Gathers data from various sources including company websites, news articles, financial reports, and industry analyses
-- **AI-Powered Content Filtering**: Uses Tavily's relevance scoring for content curation
-- **Real-Time Progress Streaming**: Uses WebSocket connections to stream research progress and results
-- **Dual Model Architecture**:
-  - Gemini 2.0 Flash for high-context research synthesis
-  - GPT-4.1 for precise report formatting and editing
-- **Modern React Frontend**: Responsive UI with real-time updates, progress tracking, and download options
-- **Modular Architecture**: Built using a pipeline of specialized research and processing nodes
-
-## Agent Framework
-
-### Research Pipeline
-
-The platform follows an agentic framework with specialized nodes that process data sequentially:
-
-1. **Research Nodes**:
-
-   - `CompanyAnalyzer`: Researches core business information
-   - `IndustryAnalyzer`: Analyzes market position and trends
-   - `FinancialAnalyst`: Gathers financial metrics and performance data
-   - `NewsScanner`: Collects recent news and developments
-
-2. **Processing Nodes**:
-
-   - `Collector`: Aggregates research data from all analyzers
-   - `Curator`: Implements content filtering and relevance scoring
-   - `Briefing`: Generates category-specific summaries using Gemini 2.0 Flash
-   - `Editor`: Compiles and formats the briefings into a final report using GPT-4.1-mini
-
-   ![web ui](static/agent-flow.png)
-
-### Content Generation Architecture
-
-The platform leverages separate models for optimal performance:
-
-1. **Gemini 2.0 Flash** (`briefing.py`):
-
-   - Handles high-context research synthesis tasks
-   - Excels at processing and summarizing large volumes of data
-   - Used for generating initial category briefings
-   - Efficient at maintaining context across multiple documents
-
-2. **GPT-4.1 mini** (`editor.py`):
-   - Specializes in precise formatting and editing tasks
-   - Handles markdown structure and consistency
-   - Superior at following exact formatting instructions
-   - Used for:
-     - Final report compilation
-     - Content deduplication
-     - Markdown formatting
-     - Real-time report streaming
-
-This approach combines Gemini's strength in handling large context windows with GPT-4.1-mini's precision in following specific formatting instructions.
-
-### Content Curation System
-
-The platform uses a content filtering system in `curator.py`:
-
-1. **Relevance Scoring**:
-
-   - Documents are scored by Tavily's AI-powered search
-   - A minimum threshold (default 0.4) is required to proceed
-   - Scores reflect relevance to the specific research query
-   - Higher scores indicate better matches to the research intent
-
-2. **Document Processing**:
-   - Content is normalized and cleaned
-   - URLs are deduplicated and standardized
-   - Documents are sorted by relevance scores
-   - Real-time progress updates are sent via WebSocket
-
-### Real-Time Communication System
-
-The platform implements a WebSocket-based real-time communication system:
-
-![web ui](static/ui-2.png)
-
-1. **Backend Implementation**:
-
-   - Uses FastAPI's WebSocket support
-   - Maintains persistent connections per research job
-   - Sends structured status updates for various events:
-     ```python
-     await websocket_manager.send_status_update(
-         job_id=job_id,
-         status="processing",
-         message=f"Generating {category} briefing",
-         result={
-             "step": "Briefing",
-             "category": category,
-             "total_docs": len(docs)
-         }
-     )
-     ```
-
-2. **Frontend Integration**:
-
-   - React components subscribe to WebSocket updates
-   - Updates are processed and displayed in real-time
-   - Different UI components handle specific update types:
-     - Query generation progress
-     - Document curation statistics
-     - Briefing completion status
-     - Report generation progress
-
-3. **Status Types**:
-   - `query_generating`: Real-time query creation updates
-   - `document_kept`: Document curation progress
-   - `briefing_start/complete`: Briefing generation status
-   - `report_chunk`: Streaming report generation
-   - `curation_complete`: Final document statistics
-
-## Setup
-
-### Quick Setup (Recommended)
-
-The easiest way to get started is using the setup script, which automatically detects and uses `uv` for faster Python package installation when available:
-
-1. Clone the repository:
+### 1. Clone Repository
 
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
-cd tavily-company-research
+git clone <repository-url>
+cd company-research-agent
 ```
 
-2. Make the setup script executable and run it:
+### 2. Environment Setup
+
+Copy the environment template and configure your API keys:
 
 ```bash
-chmod +x setup.sh
-./setup.sh
+cp env_template.txt .env
 ```
 
-The setup script will:
-
-- Detect and use `uv` for faster Python package installation (if available)
-- Check for required Python and Node.js versions
-- Optionally create a Python virtual environment (recommended)
-- Install all dependencies (Python and Node.js)
-- Guide you through setting up your environment variables
-- Optionally start both backend and frontend servers
-
-> **💡 Pro Tip**: Install [uv](https://github.com/astral-sh/uv) for significantly faster Python package installation:
->
-> ```bash
-> curl -LsSf https://astral.sh/uv/install.sh | sh
-> ```
-
-You'll need the following API keys ready:
-
-- Tavily API Key
-- Google Gemini API Key
-- OpenAI API Key
-- Google Maps API Key
-- MongoDB URI (optional)
-
-### Manual Setup
-
-If you prefer to set up manually, follow these steps:
-
-1. Clone the repository:
+Edit `.env` with your actual values:
 
 ```bash
-git clone https://github.com/pogjester/tavily-company-research.git
-cd tavily-company-research
+# API Keys
+TAVILY_API_KEY=your_tavily_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/tavily_research
+
+# Application
+PORT=8000
+ENVIRONMENT=development
+LOG_LEVEL=INFO
 ```
 
-2. Install backend dependencies:
+### 3. Backend Setup
 
 ```bash
-# Optional: Create and activate virtual environment
-# With uv (faster - recommended if available):
-uv venv .venv
-source .venv/bin/activate
-
-# Or with standard Python:
-# python -m venv .venv
-# source .venv/bin/activate
-
 # Install Python dependencies
-# With uv (faster):
-uv pip install -r requirements.txt
+pip install -r requirements.txt
 
-# Or with pip:
-# pip install -r requirements.txt
+# Start the FastAPI server
+python application.py
 ```
 
-3. Install frontend dependencies:
+The backend will be available at `http://localhost:8000`
+
+### 4. Frontend Setup
 
 ```bash
+# Navigate to UI directory
 cd ui
+
+# Install dependencies
 npm install
-```
 
-4. **Set up Environment Variables**:
-
-This project requires two separate `.env` files for the backend and frontend.
-
-**For the Backend:**
-
-Create a `.env` file in the project's root directory and add your backend API keys:
-
-```env
-TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
-
-# Optional: Enable MongoDB persistence
-# MONGODB_URI=your_mongodb_connection_string
-```
-
-**For the Frontend:**
-
-Create a `.env` file inside the `ui` directory. You can copy the example file first:
-
-```bash
-cp ui/.env.development.example ui/.env
-```
-
-Then, open `ui/.env` and add your frontend environment variables:
-
-```env
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
-
-### Docker Setup
-
-The application can be run using Docker and Docker Compose:
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/pogjester/tavily-company-research.git
-cd tavily-company-research
-```
-
-2. **Set up Environment Variables**:
-
-The Docker setup uses two separate `.env` files.
-
-**For the Backend:**
-
-Create a `.env` file in the project's root directory with your backend API keys:
-
-```env
-TAVILY_API_KEY=your_tavily_key
-GEMINI_API_KEY=your_gemini_key
-OPENAI_API_KEY=your_openai_key
-
-# Optional: Enable MongoDB persistence
-# MONGODB_URI=your_mongodb_connection_string
-```
-
-**For the Frontend:**
-
-Create a `.env` file inside the `ui` directory. You can copy the example file first:
-
-```bash
-cp ui/.env.development.example ui/.env
-```
-
-Then, open `ui/.env` and add your frontend environment variables:
-
-```env
-VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
-VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
-
-3. Build and start the containers:
-
-```bash
-
-```
-
-This will start both the backend and frontend services:
-
-- Backend API will be available at `http://localhost:8000`
-- Frontend will be available at `http://localhost:5174`
-
-To stop the services:
-
-```bash
-docker compose down
-```
-
-Note: When updating environment variables in `.env`, you'll need to restart the containers:
-
-```bash
-docker compose down && docker compose up
-```
-
-### Running the Application
-
-1. Start the backend server (choose one):
-
-```bash
-# Option 1: Direct Python Module
-python -m application.py
-
-# Option 2: FastAPI with Uvicorn
-uvicorn application:app --reload --port 8000
-```
-
-2. In a new terminal, start the frontend:
-
-```bash
-cd ui
+# Start development server
 npm run dev
 ```
 
-3. Access the application at `http://localhost:5173`
+The frontend will be available at `http://localhost:5173`
 
-## Usage
+## 🐳 Docker Deployment
 
 ### Local Development
 
-1. Start the backend server (choose one option):
-
-   **Option 1: Direct Python Module**
-
-   ```bash
-   python -m application.py
-   ```
-
-   **Option 2: FastAPI with Uvicorn**
-
-   ```bash
-   # Install uvicorn if not already installed
-   # With uv (faster):
-   uv pip install uvicorn
-   # Or with pip:
-   # pip install uvicorn
-
-   # Run the FastAPI application with hot reload
-   uvicorn application:app --reload --port 8000
-   ```
-
-   The backend will be available at:
-
-   - API Endpoint: `http://localhost:8000`
-   - WebSocket Endpoint: `ws://localhost:8000/research/ws/{job_id}`
-
-2. Start the frontend development server:
-
-   ```bash
-   cd ui
-   npm run dev
-   ```
-
-3. Access the application at `http://localhost:5173`
-
-> **⚡ Performance Note**: If you used `uv` during setup, you'll benefit from significantly faster package installation and dependency resolution. `uv` is a modern Python package manager written in Rust that can be 10-100x faster than pip.
-
-### Deployment Options
-
-The application can be deployed to various cloud platforms. Here are some common options:
-
-#### AWS Elastic Beanstalk
-
-1. Install the EB CLI:
-
-   ```bash
-   pip install awsebcli
-   ```
-
-2. Initialize EB application:
-
-   ```bash
-   eb init -p python-3.11 tavily-research
-   ```
-
-3. Create and deploy:
-   ```bash
-   eb create tavily-research-prod
-   ```
-
-#### Other Deployment Options
-
-- **Docker**: The application includes a Dockerfile for containerized deployment
-- **Heroku**: Deploy directly from GitHub with the Python buildpack
-- **Google Cloud Run**: Suitable for containerized deployment with automatic scaling
-
-Choose the platform that best suits your needs. The application is platform-agnostic and can be hosted anywhere that supports Python web applications.
-
-## API Integration
-
-The backend exposes a concise REST + WebSocket interface. All paths below are relative to your server root (e.g. `http://localhost:8000`).
-
-| Method | Path                           | Payload                                                                                 | Purpose                                                          |
-| ------ | ------------------------------ | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| POST   | `/research`                    | `{ "company": "ACME Corp", "company_url": "https://acme.com", "user_role": "analyst" }` | Kick-off a new research run. Returns `job_id` and WebSocket URL. |
-| GET    | `/research/{job_id}`           | —                                                                                       | Retrieve job metadata and status.                                |
-| GET    | `/research/{job_id}/report`    | —                                                                                       | Fetch the final Markdown report (once completed).                |
-| GET    | `/research/status/{job_id}`    | —                                                                                       | Lightweight status polling endpoint.                             |
-| POST   | `/research/competitors/modify` | `{ "job_id": "<job_id>", "competitors": ["Foo Inc", "Bar Ltd"] }`                       | Overwrite the automatically detected competitor list.            |
-| POST   | `/generate-pdf`                | `{ "report_content": "<md>", "company_name": "ACME Corp" }`                             | Convert Markdown report to a styled PDF.                         |
-| POST   | `/card_chat`                   | `{ "card_context": "...", "question": "Explain ..." }`                                  | One-off Q&A related to a specific research card.                 |
-
-### WebSocket
-
-```
-ws://<host>/research/ws/{job_id}
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
 ```
 
-The WebSocket streams structured JSON updates, for example:
+### Production Deployment
 
-```json
-{
-  "status": "processing",
-  "step": "Briefing",
-  "category": "Financials",
-  "progress": 0.42,
-  "message": "Generating Financials briefing"
-}
+```bash
+# Build Docker image
+docker build -t company-research-agent .
+
+# Run container
+docker run -p 8000:8000 --env-file .env company-research-agent
 ```
 
-Refer to `backend/services/websocket_manager.py` for the full schema.
+## ☁️ AWS Deployment
 
-## Example Outputs
+Deploy to AWS Elastic Beanstalk using the provided configuration:
 
-A complete sample report for Apple Inc. is included in [`generated_comprehensive_report.md`](generated_comprehensive_report.md).
+1. **Prepare Docker image for ECR**:
 
-![Sample report screenshot](static/ui-1.png)
-
-```md
-### Executive Summary
-
-Apple Inc. (NASDAQ: AAPL) is a leading global technology company...
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
+docker build -t company-research-agent .
+docker tag company-research-agent:latest <account-id>.dkr.ecr.us-east-1.amazonaws.com/company-research-agent:latest
+docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/company-research-agent:latest
 ```
 
-You can also download PDF versions via the **Download PDF** button in the UI.
+2. **Deploy via Elastic Beanstalk Console**:
+   - Upload `Dockerrun.aws.json`
+   - Configure environment variables
+   - Deploy application
 
-## Contributing
+See [`guides/AWS_DEPLOYMENT_GUIDE.md`](guides/AWS_DEPLOYMENT_GUIDE.md) for detailed deployment instructions.
+
+## 📖 Usage
+
+### Basic Research Workflow
+
+1. **Start Research**:
+
+   - Enter company name (required)
+   - Add company website (optional)
+   - Specify your role (optional)
+   - Click "Start Analysis"
+
+2. **Competitor Discovery**:
+
+   - System automatically discovers competitors (2-3 minutes)
+   - Real-time progress updates via WebSocket
+
+3. **Competitor Review**:
+
+   - Review discovered competitors
+   - Remove irrelevant competitors
+   - Add additional competitors if needed
+   - Confirm and continue
+
+4. **Comprehensive Analysis**:
+
+   - AI agents analyze competitors, trends, and market dynamics
+   - Progress tracked in real-time (5-10 minutes)
+
+5. **Report Generation**:
+   - Download PDF report
+   - View interactive web report
+   - Share insights with team
+
+See [`guides/USER_GUIDE.md`](guides/USER_GUIDE.md) for detailed usage instructions.
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+company-research-agent/
+├── backend/                 # Python FastAPI backend
+│   ├── agents/             # Base agent classes
+│   ├── classes/            # State management and data models
+│   ├── nodes/              # Individual AI agent implementations
+│   ├── services/           # External services (MongoDB, PDF, WebSocket)
+│   ├── utils/              # Utility functions
+│   └── workflow.py         # LangGraph workflow orchestration
+├── ui/                     # React TypeScript frontend
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── types/          # TypeScript type definitions
+│   │   ├── utils/          # Frontend utilities
+│   │   └── styles/         # Styling and themes
+│   └── public/             # Static assets
+├── guides/                 # Documentation and guides
+└── reports/                # Generated report storage
+```
+
+### Running Tests
+
+```bash
+# Backend tests
+python -m pytest
+
+# Frontend tests
+cd ui && npm test
+```
+
+### Building for Production
+
+```bash
+# Build frontend
+cd ui && npm run build
+
+# Build Docker image
+docker build -t company-research-agent .
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable         | Description                                 | Required |
+| ---------------- | ------------------------------------------- | -------- |
+| `TAVILY_API_KEY` | Tavily API key for web search               | Yes      |
+| `OPENAI_API_KEY` | OpenAI API key for AI agents                | Yes      |
+| `MONGODB_URI`    | MongoDB connection string                   | Yes      |
+| `PORT`           | Server port (default: 8000)                 | No       |
+| `ENVIRONMENT`    | Environment mode (development/production)   | No       |
+| `LOG_LEVEL`      | Logging level (INFO, DEBUG, WARNING, ERROR) | No       |
+
+### API Endpoints
+
+- `POST /research` - Start research job
+- `GET /research/{job_id}` - Get research status
+- `GET /research/{job_id}/report` - Get final report
+- `POST /generate-pdf` - Generate PDF report
+- `POST /research/competitors/modify` - Modify competitor list
+- `WS /research/ws/{job_id}` - WebSocket for real-time updates
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -481,11 +256,22 @@ You can also download PDF versions via the **Download PDF** button in the UI.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## 🆘 Support
 
-- [Tavily](https://tavily.com/) for the research API
-- All other open-source libraries and their contributors
+For support and questions:
+
+1. Check the [User Guide](guides/USER_GUIDE.md)
+2. Review the [AWS Deployment Guide](guides/AWS_DEPLOYMENT_GUIDE.md)
+3. Open an issue in the GitHub repository
+
+## 🙏 Acknowledgments
+
+- **OpenAI** for GPT models powering the AI agents
+- **Tavily** for comprehensive web search capabilities
+- **LangGraph** for agent workflow orchestration
+- **FastAPI** for the high-performance backend framework
+- **React** and **TypeScript** for the modern frontend experience
