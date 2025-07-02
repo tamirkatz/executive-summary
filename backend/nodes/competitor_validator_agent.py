@@ -133,21 +133,31 @@ class CompetitorValidatorAgent(BaseAgent):
         current_year = datetime.now().year
         prev_year = current_year - 1
         filtered_names: List[str] = []
-        for name in validated_names:
-            try:
-                query = f'"{name}" news {prev_year} OR {current_year}'
-                result = await self.tavily.search(query=query, max_results=3)
-                has_recent = False
-                for item in result.get("results", []):
-                    date = item.get("published_date") or item.get("date")
-                    if date and (str(prev_year) in date or str(current_year) in date):
-                        has_recent = True
-                        break
-                if has_recent:
-                    filtered_names.append(name)
-            except Exception as e:
-                self.logger.warning(f"Post-filter failed for {name}: {e}")
-                continue
+        
+        async def _check_recent_news(name: str) -> bool:
+            """Check if a competitor has recent news mentions with rate limiting."""
+            async with self.sem:  # Use semaphore for rate limiting
+                try:
+                    await asyncio.sleep(0.5)  # Add small delay to avoid overwhelming APIs
+                    query = f'"{name}" news {prev_year} OR {current_year}'
+                    result = await self.tavily.search(query=query, max_results=3)
+                    
+                    for item in result.get("results", []):
+                        date = item.get("published_date") or item.get("date")
+                        if date and (str(prev_year) in date or str(current_year) in date):
+                            return True
+                    return False
+                except Exception as e:
+                    self.logger.warning(f"Post-filter failed for {name}: {e}")
+                    return False
+        
+        # Process competitors with rate limiting
+        news_check_tasks = [_check_recent_news(name) for name in validated_names]
+        news_results = await asyncio.gather(*news_check_tasks, return_exceptions=True)
+        
+        for name, has_recent in zip(validated_names, news_results):
+            if isinstance(has_recent, bool) and has_recent:
+                filtered_names.append(name)
 
         if filtered_names:
             validated_names = filtered_names

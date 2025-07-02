@@ -1,6 +1,49 @@
-# Company Research Agent 🔍
+# Weekly Market Research Agent 🔍
 
-A sophisticated AI-powered company research platform that provides comprehensive competitive intelligence and market analysis through multi-agent workflows.
+💡 **Inspiration**
+
+While working at my current company, I noticed a recurring pattern: executives constantly share competitor news — new product launches, partnerships, acquisitions — in a WhatsApp group. These updates often create urgency and anxiety, but there's no structured way to track, verify, or act on them.
+
+This inspired me to build a tool that delivers **weekly market intelligence reports** focused on competitors and sector trends — enabling leadership to stay ahead with **accurate, relevant, and actionable insights**.
+
+## Why This Product?
+
+Companies often lack a systematic way to monitor competitor moves and industry shifts. This leads to delayed reactions and missed opportunities. This project provides a solution:
+
+- **Automated competitor tracking**
+- **Summarized weekly reports**
+- **Market trends without noise**
+- **Optional alerts for major announcements**
+
+## User Flow
+
+1. **Quick setup**: Simple onboarding form to define the company's domain and competitors.
+2. **Competitor curation**: Extracted from company website, editable by user (fast and no waiting).
+3. **Weekly briefing**: Concise market updates focused solely on competitors and trends — no internal data.
+4. _(Optional)_ **Push notifications** for major news.
+
+---
+
+This project demonstrates how Tavily's data can power strategic decision-making with minimal effort from end users.
+
+⚠️ Challenges & Lessons Learned
+Throughout the development of this tool, several real-world challenges surfaced — especially when attempting to make it production-grade:
+
+1. Identifying Actual Competitors
+   This turned out to be the hardest problem.
+
+I initially tried straightforward queries like “Tavily competitors” or “Tavily alternatives” — but results were often unreliable, vague, or outdated.
+
+I tested multiple approaches and found that a more effective method was to first gather contextual information about the company (services, customer types, industry focus, etc.), and then use that data to generate dynamic search queries for discovering relevant competitors.
+
+While this improves precision, it's still an imperfect solution and remains an open challenge — especially for niche or stealthy companies.
+
+2. Gathering Relevant News & Trends
+   Even once competitors are identified, surfacing only high-value updates (e.g., product launches, M&A, partnerships) is tricky.
+
+A lot of online content is noisy: blog posts, hiring announcements, and minor updates clutter the feed.
+
+I use structured prompts and search instructions to narrow the scope — but ensuring relevance and accuracy without human feedback remains an ongoing tradeoff.
 
 ## ✨ Features
 
